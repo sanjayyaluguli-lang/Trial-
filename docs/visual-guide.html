@@ -945,6 +945,8 @@ Priya Nair	priya.nair@example.com	Operations	Operations Manager	You	2026-09-15	P
   <div class="tbl"><table class="plain">
     <thead><tr><th>What you see</th><th>Likely cause</th><th>Fix</th></tr></thead>
     <tbody>
+      <tr><td>Engine columns O–AT stay empty for a response</td><td>The role cell (column E of the responses tab) is empty</td><td>Make the role question <b>Required</b>. For a test row, type the role into E by hand, then run <code>testWithLastRow</code></td></tr>
+      <tr><td>The alert shows the email as the name and vice versa</td><td>Name is in column B and Email in C</td><td>In <code>Code.gs</code> set <code>EMAIL: 3, NAME: 2</code> in <code>CFG.COL</code></td></tr>
       <tr><td>No email, and no run under Executions</td><td>The trigger isn't installed, or the response was submitted before you installed it</td><td>Run <code>installTrigger</code>, check ⏰ Triggers, then run <code>testWithLastRow</code></td></tr>
       <tr><td><code>diagnose</code> says "not bound to a spreadsheet"</td><td>The script was created from the Form editor</td><td>Create it from the spreadsheet instead: <b>Extensions ▸ Apps Script</b></td></tr>
       <tr><td>Error: <code>Cannot read properties of null (reading 'getRange')</code></td><td>A tab name doesn't match</td><td>Tabs must be exactly <code>Algorithm Engine</code> and <code>Form Responses 1</code></td></tr>

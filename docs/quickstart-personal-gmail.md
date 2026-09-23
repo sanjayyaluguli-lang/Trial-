@@ -127,6 +127,8 @@ Common causes:
 | AP shows blank or `BASELINE MISSING` | The role text doesn't match `Role_Map` column A, or a question title doesn't match the competency name. |
 | AU says `FAILED` | `EMAIL_FALLBACK_TO` is empty. |
 | `#N/A` filling every column after the first in a block (e.g. P–W) | An older version of the O1, X1, AG1 or AR1 formula. Copy those four formulas again from `sheets/formulas.md`. |
+| Engine columns O–AT stay empty for a response | The role cell (column E of the responses tab) is empty. Make the role question **Required** in the form. For a test row, type the role into E by hand, then run `testWithLastRow`. |
+| Alert shows the email as the name and vice versa | Your responses tab has Name in B and Email in C. In `Code.gs` set `EMAIL: 3, NAME: 2` in `CFG.COL`. |
 | No execution listed at all | The trigger isn't installed, or the response was submitted before you installed it. Rerun `installTrigger`, then run `testWithLastRow`. |
 | `diagnose` says *Script is not bound to a spreadsheet* | The script was created from the Form editor. Create it from the spreadsheet instead (**Extensions ▸ Apps Script**). |
 

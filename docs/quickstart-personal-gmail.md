@@ -107,8 +107,17 @@ Leave `Algorithm Engine` for Step 4. It needs the form's response tab to exist f
 Why 90.1%: the Senior PM weighted maximum is 101. Being one level short on two Critical
 competencies loses 5 + 5 = 10 points, giving 91/101.
 
-**Didn't get the email?** In Apps Script go to **▶ Executions** (left sidebar) and open the latest
-`onFormSubmit` run to see the error. Common causes:
+**Didn't get the email?**
+
+1. In Apps Script, pick **`diagnose`** in the function dropdown ▸ **Run**. It prints a ✅/❌
+   checklist in the Execution log and sends you a plain test email.
+2. Check **Algorithm Engine column AU** on your response row. A failed alert writes
+   `FAILED … : <reason>` there.
+3. In Gmail, also look in **Sent** and **All Mail**. Gmail sometimes files mail you send to
+   yourself only there.
+4. Open **≡ Executions** (left sidebar) for the full error of each `onFormSubmit` run.
+
+Common causes:
 
 | Symptom | Fix |
 |---|---|
@@ -116,7 +125,8 @@ competencies loses 5 + 5 = 10 points, giving 91/101.
 | AP shows blank or `BASELINE MISSING` | The role text doesn't match `Role_Map` column A, or a question title doesn't match the competency name. |
 | AU says `FAILED` | `EMAIL_FALLBACK_TO` is empty. |
 | `#N/A` filling every column after the first in a block (e.g. P–W) | An older version of the O1, X1, AG1 or AR1 formula. Copy those four formulas again from `sheets/formulas.md`. |
-| No execution listed at all | The trigger isn't installed. Rerun `installTrigger`. |
+| No execution listed at all | The trigger isn't installed, or the response was submitted before you installed it. Rerun `installTrigger`, then run `testWithLastRow`. |
+| `diagnose` says *Script is not bound to a spreadsheet* | The script was created from the Form editor. Create it from the spreadsheet instead (**Extensions ▸ Apps Script**). |
 
 To resend for the last row without submitting again: run **`testWithLastRow`**.
 

@@ -29,15 +29,22 @@ const PRIORITY_RANK = { Critical: 4, High: 3, Medium: 2, Med: 2, Low: 1 };
 /** Installable trigger handler: Spreadsheet ▸ On form submit. */
 function onFormSubmit(e) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  if (e && e.range && e.range.getSheet().getName() !== CFG.RESPONSES_SHEET) return;
-  const row = (e && e.range) ? e.range.getRow()
-                             : ss.getSheetByName(CFG.RESPONSES_SHEET).getLastRow();
+  const responses = getResponsesSheet_(ss);
+  if (!responses) throw new Error('No form responses tab found. Link the form to this spreadsheet.');
+  if (e && e.range && e.range.getSheet().getSheetId() !== responses.getSheetId()) {
+    console.warn('Ignoring submission to "' + e.range.getSheet().getName() + '" (not the responses tab).');
+    return;
+  }
+  const row = (e && e.range) ? e.range.getRow() : responses.getLastRow();
+  console.log('Processing response row ' + row + ' from "' + responses.getName() + '"');
 
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);                       // serialise simultaneous submissions
+  const engine = ss.getSheetByName(CFG.ENGINE_SHEET);
+  if (!engine) throw new Error('Tab "' + CFG.ENGINE_SHEET + '" not found.');
+  const alertCell = engine.getRange(row, CFG.COL.ALERT);
+  const stamp = () => Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd HH:mm');
   try {
-    const engine = ss.getSheetByName(CFG.ENGINE_SHEET);
-    const alertCell = engine.getRange(row, CFG.COL.ALERT);
     if (String(alertCell.getValue()).indexOf('Sent') === 0) return;   // duplicate-trigger guard
 
     const data = waitForEngineRow_(engine, row);
@@ -47,12 +54,31 @@ function onFormSubmit(e) {
 
     let ok = postToChat_(buildChatMessage_(data, gaps, link));
     if (!ok && CFG.EMAIL_FALLBACK_TO) ok = sendEmail_(data, gaps, link);
-
-    const stamp = Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd HH:mm');
-    alertCell.setValue((ok ? 'Sent ' : 'FAILED ') + stamp);
+    if (!ok && !CFG.EMAIL_FALLBACK_TO && !getWebhookUrl_()) {
+      throw new Error('No alert destination: set EMAIL_FALLBACK_TO or the CHAT_WEBHOOK_URL Script Property.');
+    }
+    alertCell.setValue((ok ? 'Sent ' : 'FAILED ') + stamp());
+  } catch (err) {
+    alertCell.setValue('FAILED ' + stamp() + ': ' + err.message);
+    throw err;                                // also shows in Apps Script ▸ Executions
   } finally {
     lock.releaseLock();
   }
+}
+
+/**
+ * The tab the form writes to. Google names it in the account's language
+ * ("Form Responses 1", "Formularantworten 1", "Réponses au formulaire 1", …),
+ * so fall back to the first tab that is linked to a form.
+ */
+function getResponsesSheet_(ss) {
+  return ss.getSheetByName(CFG.RESPONSES_SHEET) ||
+         ss.getSheets().find(s => s.getFormUrl()) || null;
+}
+
+function getWebhookUrl_() {
+  const url = PropertiesService.getScriptProperties().getProperty('CHAT_WEBHOOK_URL') || CFG.CHAT_WEBHOOK_URL;
+  return (!url || url.indexOf('SPACE_ID') !== -1) ? '' : url;
 }
 
 /** Waits until the ARRAYFORMULAs have recalculated the new row. */
@@ -138,9 +164,9 @@ function buildChatMessage_(d, gaps, link) {
 }
 
 function postToChat_(message) {
-  const url = PropertiesService.getScriptProperties().getProperty('CHAT_WEBHOOK_URL') || CFG.CHAT_WEBHOOK_URL;
-  if (!url || url.indexOf('SPACE_ID') !== -1) {
-    console.warn('Chat webhook URL not configured.');
+  const url = getWebhookUrl_();
+  if (!url) {
+    console.log('Chat webhook not configured; skipping Chat.');
     return false;
   }
   const res = UrlFetchApp.fetch(url, {
@@ -167,6 +193,7 @@ function sendEmail_(d, gaps, link) {
               '<p>Gaps:</p><ul>' + (rows || '<li>None</li>') + '</ul>' +
               '<p><a href="' + link + '">Open in Algorithm Engine</a></p>'
   });
+  console.log('Email sent to ' + CFG.EMAIL_FALLBACK_TO);
   return true;
 }
 
@@ -182,7 +209,61 @@ function installTrigger() {
 /** Manual test: re-sends the alert for the most recent response. */
 function testWithLastRow() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const row = ss.getSheetByName(CFG.RESPONSES_SHEET).getLastRow();
+  const row = getResponsesSheet_(ss).getLastRow();
   ss.getSheetByName(CFG.ENGINE_SHEET).getRange(row, CFG.COL.ALERT).clearContent();
   onFormSubmit(null);
+}
+
+/**
+ * Troubleshooting: checks each link in the chain, prints a ✅/❌ list in the
+ * Execution log and sends a plain test email.
+ */
+function diagnose() {
+  const out = [];
+  const check = (ok, msg) => out.push((ok ? '✅ ' : '❌ ') + msg);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  check(!!ss, ss ? 'Script is bound to spreadsheet "' + ss.getName() + '"'
+                 : 'Script is not bound to a spreadsheet. Open it from the sheet: Extensions ▸ Apps Script');
+  if (!ss) { console.log(out.join('\n')); return; }
+
+  const responses = getResponsesSheet_(ss);
+  check(!!responses, responses ? 'Responses tab: "' + responses.getName() + '"'
+                               : 'No responses tab. Link the form: Form ▸ Responses ▸ Link to Sheets');
+  if (responses && responses.getName() !== CFG.RESPONSES_SHEET) {
+    out.push('ℹ️ Responses tab has a different name. Algorithm Engine!A1 must read from \'' +
+             responses.getName() + '\'!A1:N');
+  }
+  const engine = ss.getSheetByName(CFG.ENGINE_SHEET);
+  check(!!engine, 'Tab "' + CFG.ENGINE_SHEET + '" ' + (engine ? 'exists' : 'is missing'));
+
+  const triggers = ScriptApp.getProjectTriggers().filter(t =>
+    t.getHandlerFunction() === 'onFormSubmit' && t.getEventType() === ScriptApp.EventType.ON_FORM_SUBMIT);
+  check(triggers.length === 1, triggers.length + ' form-submit trigger(s) installed' +
+        (triggers.length === 0 ? '. Run installTrigger' : triggers.length > 1 ? '. Run installTrigger to reset' : ''));
+
+  const webhook = getWebhookUrl_();
+  check(!!webhook || !!CFG.EMAIL_FALLBACK_TO, 'Alert goes to: ' +
+        ([webhook ? 'Chat webhook' : '', CFG.EMAIL_FALLBACK_TO].filter(String).join(' + ') ||
+         'nowhere. Set EMAIL_FALLBACK_TO at the top of the script'));
+  const quota = MailApp.getRemainingDailyQuota();
+  check(quota > 0, 'Emails left today: ' + quota);
+
+  if (responses && engine) {
+    const row = responses.getLastRow();
+    check(row >= 2, 'Latest response is on row ' + row + (row < 2 ? ' (no responses yet)' : ''));
+    if (row >= 2) {
+      const d = engine.getRange(row, 1, 1, CFG.COL.ALERT).getValues()[0];
+      check(d[CFG.COL.ROLE - 1] !== '', 'Engine row ' + row + ' role: "' + d[CFG.COL.ROLE - 1] + '"');
+      check(typeof d[CFG.COL.MATCH - 1] === 'number',
+            'Engine row ' + row + ' Match Score (AP): ' + JSON.stringify(d[CFG.COL.MATCH - 1]));
+      out.push('ℹ️ Alert Status (AU' + row + '): ' + JSON.stringify(d[CFG.COL.ALERT - 1]));
+    }
+  }
+
+  if (CFG.EMAIL_FALLBACK_TO) {
+    MailApp.sendEmail(CFG.EMAIL_FALLBACK_TO, 'Competency matcher – test email',
+                      'If you can read this, the script can email you.');
+    out.push('📧 Test email sent to ' + CFG.EMAIL_FALLBACK_TO);
+  }
+  console.log(out.join('\n'));
 }

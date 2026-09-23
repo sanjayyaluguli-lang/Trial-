@@ -23,6 +23,11 @@ About 30–45 minutes. Everything runs free on a personal `@gmail.com` account.
 
 ## Step 2 — Add the helper tabs (5 min)
 
+> **European locale?** If your spreadsheet uses `;` between function arguments (you get a
+> *formula parse error* on paste), copy every formula from
+> [`sheets/formulas-eu.md`](../sheets/formulas-eu.md) instead of `sheets/formulas.md`. You can check
+> or change the locale under **File ▸ Settings ▸ Locale**.
+
 In the spreadsheet, click **+** (bottom left) to add each tab, following
 [`sheets/formulas.md`](../sheets/formulas.md):
 

@@ -17,6 +17,7 @@ A self-assessment and role-matching pipeline built entirely in Google Workspace:
 |---|---|
 | [`docs/form-layout.md`](docs/form-layout.md) | Google Form sections, routing question and question wording |
 | [`sheets/formulas.md`](sheets/formulas.md) | Every helper tab and formula (`Role_Map`, `Weights`, `Baseline_Master`, `Algorithm Engine`, `Candidate_Roster`, `Dashboard_Feed`) |
+| [`sheets/formulas-eu.md`](sheets/formulas-eu.md) | The same formulas in European-locale syntax (`;` separators) |
 | [`apps-script/Code.gs`](apps-script/Code.gs) | Form-submit alert to a Google Chat webhook, with an optional Gmail fallback |
 | [`docs/looker-studio.md`](docs/looker-studio.md) | Dashboard data source, calculated fields and chart setup |
 | [`docs/quickstart-personal-gmail.md`](docs/quickstart-personal-gmail.md) | Step-by-step test on a personal Gmail account (email alerts instead of Chat) |

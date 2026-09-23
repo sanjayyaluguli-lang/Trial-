@@ -216,6 +216,15 @@ table.plain th{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;co
 .tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
 .expect td:last-child{font-family:var(--font-m);font-size:.86rem}
 footer{margin-top:56px;color:var(--ink-3);font-size:.88rem;border-top:1px solid var(--line);padding-top:16px}
+.locale{display:grid;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:12px 14px}
+.locale .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;width:max-content;max-width:100%}
+.locale .seg label{display:inline-flex;gap:6px;align-items:center;padding:6px 12px;cursor:pointer;font-weight:600;font-size:.92rem}
+.locale .seg label+label{border-left:1px solid var(--line)}
+.locale .seg input{position:absolute;opacity:0;pointer-events:none}
+.locale .seg label:has(input:checked){background:var(--accent);color:var(--surface)}
+.locale .seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:-2px}
+.locale small{color:var(--ink-2);font-size:.9rem}
+.lc{font-family:var(--font-m);font-size:.72rem;font-weight:600;color:var(--ink-3);border:1px solid var(--line);border-radius:4px;padding:0 5px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -235,6 +244,14 @@ footer{margin-top:56px;color:var(--ink-3);font-size:.88rem;border-top:1px solid 
     <div class="node" style="--c:var(--gmail)"><b>Gmail alert</b><small>Score and critical gaps</small></div>
   </div>
   <div class="note warn"><b class="t">Why email and not Google Chat?</b><span>Personal Google accounts can't create Chat webhooks; that's a Workspace-only feature. The script already sends an email when no webhook is set. You just add your address in Step 5.</span></div>
+  <div class="locale" role="group" aria-labelledby="loc-t">
+    <b id="loc-t">Formula style for your spreadsheet</b>
+    <div class="seg">
+      <label><input type="radio" name="loc" id="loc-us" value="us" checked> US / UK &nbsp;<span class="lc">A1, B1</span></label>
+      <label><input type="radio" name="loc" id="loc-eu" value="eu"> European &nbsp;<span class="lc">A1; B1</span></label>
+    </div>
+    <small>Choose <b>European</b> if pasting a formula gives a <i>formula parse error</i>, or if your spreadsheet shows decimals as <code>0,9</code>. You can check under <b>File ▸ Settings ▸ Locale</b>. Every formula copy button below follows this choice.</small>
+  </div>
 </header>
 
 <div class="layout">
@@ -327,7 +344,7 @@ Medium	2
 Med	2
 Low	1</pre></div>
   </div>
-  <div class="cp tall"><div class="cp-head"><span class="where"><b>Baseline_Master</b> paste at <span class="cell">A1</span></span><button class="copy" data-copy="f0">Copy</button></div><pre id="f0">=REDUCE(
+  <div class="cp tall"><div class="cp-head"><span class="where"><b>Baseline_Master</b> paste at <span class="cell">A1</span></span><span class="lc">US ,</span><button class="copy" data-copy="f0">Copy</button></div><pre id="f0">=REDUCE(
   {"Key","Role","Competency","Priority","Required","Weight"},
   FILTER(Role_Map!A2:A, Role_Map!A2:A&lt;&gt;""),
   LAMBDA(acc, role, LET(
@@ -335,14 +352,14 @@ Low	1</pre></div>
     comp, INDIRECT("'" &amp; tab &amp; "'!B3:B11"),
     pri,  INDIRECT("'" &amp; tab &amp; "'!E3:E11"),
     req,  INDIRECT("'" &amp; tab &amp; "'!F3:F11"),
-    VSTACK(acc, ARRAYFORMULA(HSTACK(
+    VSTACK(acc, FILTER(HSTACK(
       role &amp; "|" &amp; TRIM(comp),
-      IF(comp = "", , role),
+      IF(comp = "", "", role),
       TRIM(comp),
       PROPER(TRIM(pri)),
-      IF(req = "", , IFERROR(VALUE(LEFT(TRIM(req), 1)))),
+      IF(req = "", "", IFERROR(VALUE(LEFT(TRIM(req), 1)))),
       IFERROR(VLOOKUP(PROPER(TRIM(pri)), Weights!A2:B, 2, FALSE), 0)
-    )))
+    ), comp &lt;&gt; ""))
   ))
 )</pre></div>
   <div class="note ok"><b class="t">Check it worked</b><span>In Baseline_Master, the Senior PM rows should show Required values of <code>3, 4, 4, 3, 3, 3, 3, 3, 2</code>. The Chief Engineer and TPM rows have blank Priority and Required columns. That's expected.</span></div>
@@ -439,14 +456,14 @@ Domain Mastery &amp; Application</pre></div>
     </figure>
   </div>
   <div class="cp-grid">
-    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">A1</span> copy of the responses</span><button class="copy" data-copy="f1">Copy</button></div><pre id="f1">=ARRAYFORMULA('Form Responses 1'!A1:N)</pre></div>
-    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">O1</span> required level</span><button class="copy" data-copy="f2">Copy</button></div><pre id="f2">=ARRAYFORMULA(VSTACK("REQ · " &amp; F1:N1,
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">A1</span> copy of the responses</span><span class="lc">US ,</span><button class="copy" data-copy="f1">Copy</button></div><pre id="f1">=ARRAYFORMULA('Form Responses 1'!A1:N)</pre></div>
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">O1</span> required level</span><span class="lc">US ,</span><button class="copy" data-copy="f2">Copy</button></div><pre id="f2">=ARRAYFORMULA(VSTACK("REQ · " &amp; F1:N1,
   IF(E2:E = "", , IFERROR(VLOOKUP(E2:E &amp; "|" &amp; F1:N1, Baseline_Master!A:F, 5, FALSE)))))</pre></div>
-    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">X1</span> role priority</span><button class="copy" data-copy="f3">Copy</button></div><pre id="f3">=ARRAYFORMULA(VSTACK("PRI · " &amp; F1:N1,
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">X1</span> role priority</span><span class="lc">US ,</span><button class="copy" data-copy="f3">Copy</button></div><pre id="f3">=ARRAYFORMULA(VSTACK("PRI · " &amp; F1:N1,
   IF(E2:E = "", , IFERROR(VLOOKUP(E2:E &amp; "|" &amp; F1:N1, Baseline_Master!A:F, 4, FALSE)))))</pre></div>
-    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AG1</span> gap</span><button class="copy" data-copy="f4">Copy</button></div><pre id="f4">=ARRAYFORMULA(VSTACK("GAP · " &amp; F1:N1,
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AG1</span> gap</span><span class="lc">US ,</span><button class="copy" data-copy="f4">Copy</button></div><pre id="f4">=ARRAYFORMULA(VSTACK("GAP · " &amp; F1:N1,
   IF((E2:E = "") + (O2:W = ""), , F2:N - O2:W)))</pre></div>
-    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AP1</span> Match Score %</span><button class="copy" data-copy="f5">Copy</button></div><pre id="f5">=VSTACK("Match Score %", ARRAYFORMULA(IF(E2:E = "", , LET(
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AP1</span> Match Score %</span><span class="lc">US ,</span><button class="copy" data-copy="f5">Copy</button></div><pre id="f5">=VSTACK("Match Score %", ARRAYFORMULA(IF(E2:E = "", , LET(
   S, IFERROR(F2:N * 1, 0),
   R, IFERROR(O2:W * 1, 0),
   W, IFERROR(VLOOKUP(X2:AF, Weights!A:B, 2, FALSE), 0),
@@ -454,17 +471,17 @@ Domain Mastery &amp; Application</pre></div>
   earned,   MMULT(W * IF(S &lt; R, S, R), ones),
   possible, MMULT(W * R, ones),
   IF(possible = 0, "BASELINE MISSING", earned / possible)))))</pre></div>
-    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AQ1</span> critical gap count</span><button class="copy" data-copy="f6">Copy</button></div><pre id="f6">=ARRAYFORMULA(VSTACK("Critical Gaps",
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AQ1</span> critical gap count</span><span class="lc">US ,</span><button class="copy" data-copy="f6">Copy</button></div><pre id="f6">=ARRAYFORMULA(VSTACK("Critical Gaps",
   IF(E2:E = "", , MMULT(IF((X2:AF = "Critical") * (AG2:AO &lt; 0), 1, 0), SEQUENCE(9, 1, 1, 0)))))</pre></div>
-    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AR1</span> critical gap detail</span><button class="copy" data-copy="f7">Copy</button></div><pre id="f7">=ARRAYFORMULA(VSTACK("Critical Gap Detail", IF(E2:E = "", ,
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AR1</span> critical gap detail</span><span class="lc">US ,</span><button class="copy" data-copy="f7">Copy</button></div><pre id="f7">=ARRAYFORMULA(VSTACK("Critical Gap Detail", IF(E2:E = "", ,
   BYROW(IF((X2:AF = "Critical") * (AG2:AO &lt; 0),
            F1:N1 &amp; " (self " &amp; F2:N &amp; " vs req " &amp; O2:W &amp; ")", ""),
         LAMBDA(r, TEXTJOIN("; ", TRUE, r))))))</pre></div>
-    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AS1</span> readiness</span><button class="copy" data-copy="f8">Copy</button></div><pre id="f8">=ARRAYFORMULA(VSTACK("Readiness", IF(E2:E = "", ,
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AS1</span> readiness</span><span class="lc">US ,</span><button class="copy" data-copy="f8">Copy</button></div><pre id="f8">=ARRAYFORMULA(VSTACK("Readiness", IF(E2:E = "", ,
   IF(ISTEXT(AP2:AP), "Baseline Missing",
   IF((AP2:AP &gt;= 0.9) * (AQ2:AQ = 0), "Ready Now",
   IF(AP2:AP &gt;= 0.75, "Ready 1-2 Yrs", "Development Needed"))))))</pre></div>
-    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AT1</span> meets threshold</span><button class="copy" data-copy="f9">Copy</button></div><pre id="f9">=ARRAYFORMULA(VSTACK("Meets Threshold", IF(E2:E = "", ,
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AT1</span> meets threshold</span><span class="lc">US ,</span><button class="copy" data-copy="f9">Copy</button></div><pre id="f9">=ARRAYFORMULA(VSTACK("Meets Threshold", IF(E2:E = "", ,
   IF(ISNUMBER(AP2:AP),
      IF(AP2:AP &gt;= IFERROR(VLOOKUP(E2:E, Role_Map!A:C, 3, FALSE), 0.8), "Yes", "No"),
      "No"))))</pre></div>
@@ -802,7 +819,7 @@ function testWithLastRow() {
     <div class="cp"><div class="cp-head"><span class="where"><b>Candidate_Roster</b> sample, paste at <span class="cell">A1</span></span><button class="copy" data-copy="t-roster">Copy</button></div><pre id="t-roster">Candidate Name	Email	Discipline	Target Role	Hiring Manager	Invited On	Manager Review
 Alex Rivera	alex.rivera@example.com	Engineering	Quality Lead	You	2026-09-10	Pending
 Priya Nair	priya.nair@example.com	Operations	Operations Manager	You	2026-09-15	Pending</pre></div>
-    <div class="cp"><div class="cp-head"><span class="where"><b>Dashboard_Feed</b> paste at <span class="cell">A1</span></span><button class="copy" data-copy="f10">Copy</button></div><pre id="f10">=ARRAYFORMULA(LET(
+    <div class="cp"><div class="cp-head"><span class="where"><b>Dashboard_Feed</b> paste at <span class="cell">A1</span></span><span class="lc">US ,</span><button class="copy" data-copy="f10">Copy</button></div><pre id="f10">=ARRAYFORMULA(LET(
   roster, IFERROR(FILTER(Candidate_Roster!A2:G, Candidate_Roster!B2:B &lt;&gt; "")),
   eng,    IFERROR(SORT(FILTER('Algorithm Engine'!A2:AT, 'Algorithm Engine'!B2:B &lt;&gt; ""), 1, FALSE)),
   rKey,   IFERROR(LOWER(TRIM(CHOOSECOLS(roster, 2))), ""),
@@ -841,6 +858,7 @@ Priya Nair	priya.nair@example.com	Operations	Operations Manager	You	2026-09-15	P
       <tr><td>AP2 blank or <code>BASELINE MISSING</code></td><td>The role doesn't match Role_Map, or a question title doesn't match a competency name</td><td>Compare Form Responses row 1 with the copied titles, and the role options with Role_Map column A</td></tr>
       <tr><td>AU2 says <code>FAILED</code></td><td>No email address set</td><td>Fill in <code>EMAIL_FALLBACK_TO</code>, Save, then run <code>testWithLastRow</code></td></tr>
       <tr><td><code>#REF!</code> "would overwrite data"</td><td>Something is typed below a row 1 formula</td><td>Clear that column from row 2 down</td></tr>
+      <tr><td><i>Formula parse error</i> on paste</td><td>Your spreadsheet uses a European locale (<code>;</code> separators)</td><td>Switch <b>Formula style</b> at the top of this page to <b>European</b> and copy again</td></tr>
       <tr><td><code>#NAME?</code> on REDUCE / LAMBDA / VSTACK</td><td>The file is still an .xlsx</td><td>Redo Step 1: File ▸ Save as Google Sheets</td></tr>
     </tbody></table></div>
 </section>
@@ -850,6 +868,7 @@ Priya Nair	priya.nair@example.com	Operations	Operations Manager	You	2026-09-15	P
 </div>
 </div>
 
+<script type="application/json" id="eu-data">{"f0": "=REDUCE(\n  {\"Key\"\\\"Role\"\\\"Competency\"\\\"Priority\"\\\"Required\"\\\"Weight\"};\n  FILTER(Role_Map!A2:A; Role_Map!A2:A\u003c>\"\");\n  LAMBDA(acc; role; LET(\n    tab;  VLOOKUP(role; Role_Map!A2:B; 2; FALSE);\n    comp; INDIRECT(\"'\" & tab & \"'!B3:B11\");\n    pri;  INDIRECT(\"'\" & tab & \"'!E3:E11\");\n    req;  INDIRECT(\"'\" & tab & \"'!F3:F11\");\n    VSTACK(acc; FILTER(HSTACK(\n      role & \"|\" & TRIM(comp);\n      IF(comp = \"\"; \"\"; role);\n      TRIM(comp);\n      PROPER(TRIM(pri));\n      IF(req = \"\"; \"\"; IFERROR(VALUE(LEFT(TRIM(req); 1))));\n      IFERROR(VLOOKUP(PROPER(TRIM(pri)); Weights!A2:B; 2; FALSE); 0)\n    ); comp \u003c> \"\"))\n  ))\n)", "f1": "=ARRAYFORMULA('Form Responses 1'!A1:N)", "f2": "=ARRAYFORMULA(VSTACK(\"REQ \u00b7 \" & F1:N1;\n  IF(E2:E = \"\"; ; IFERROR(VLOOKUP(E2:E & \"|\" & F1:N1; Baseline_Master!A:F; 5; FALSE)))))", "f3": "=ARRAYFORMULA(VSTACK(\"PRI \u00b7 \" & F1:N1;\n  IF(E2:E = \"\"; ; IFERROR(VLOOKUP(E2:E & \"|\" & F1:N1; Baseline_Master!A:F; 4; FALSE)))))", "f4": "=ARRAYFORMULA(VSTACK(\"GAP \u00b7 \" & F1:N1;\n  IF((E2:E = \"\") + (O2:W = \"\"); ; F2:N - O2:W)))", "f5": "=VSTACK(\"Match Score %\"; ARRAYFORMULA(IF(E2:E = \"\"; ; LET(\n  S; IFERROR(F2:N * 1; 0);\n  R; IFERROR(O2:W * 1; 0);\n  W; IFERROR(VLOOKUP(X2:AF; Weights!A:B; 2; FALSE); 0);\n  ones; SEQUENCE(9; 1; 1; 0);\n  earned;   MMULT(W * IF(S \u003c R; S; R); ones);\n  possible; MMULT(W * R; ones);\n  IF(possible = 0; \"BASELINE MISSING\"; earned / possible)))))", "f6": "=ARRAYFORMULA(VSTACK(\"Critical Gaps\";\n  IF(E2:E = \"\"; ; MMULT(IF((X2:AF = \"Critical\") * (AG2:AO \u003c 0); 1; 0); SEQUENCE(9; 1; 1; 0)))))", "f7": "=ARRAYFORMULA(VSTACK(\"Critical Gap Detail\"; IF(E2:E = \"\"; ;\n  BYROW(IF((X2:AF = \"Critical\") * (AG2:AO \u003c 0);\n           F1:N1 & \" (self \" & F2:N & \" vs req \" & O2:W & \")\"; \"\");\n        LAMBDA(r; TEXTJOIN(\"; \"; TRUE; r))))))", "f8": "=ARRAYFORMULA(VSTACK(\"Readiness\"; IF(E2:E = \"\"; ;\n  IF(ISTEXT(AP2:AP); \"Baseline Missing\";\n  IF((AP2:AP >= 0,9) * (AQ2:AQ = 0); \"Ready Now\";\n  IF(AP2:AP >= 0,75; \"Ready 1-2 Yrs\"; \"Development Needed\"))))))", "f9": "=ARRAYFORMULA(VSTACK(\"Meets Threshold\"; IF(E2:E = \"\"; ;\n  IF(ISNUMBER(AP2:AP);\n     IF(AP2:AP >= IFERROR(VLOOKUP(E2:E; Role_Map!A:C; 3; FALSE); 0,8); \"Yes\"; \"No\");\n     \"No\"))))", "f10": "=ARRAYFORMULA(LET(\n  roster; IFERROR(FILTER(Candidate_Roster!A2:G; Candidate_Roster!B2:B \u003c> \"\"));\n  eng;    IFERROR(SORT(FILTER('Algorithm Engine'!A2:AT; 'Algorithm Engine'!B2:B \u003c> \"\"); 1; FALSE));\n  rKey;   IFERROR(LOWER(TRIM(CHOOSECOLS(roster; 2))); \"\");\n  eKey;   IFERROR(LOWER(TRIM(CHOOSECOLS(eng; 2))); \"\");\n  keys;   SORT(UNIQUE(FILTER(VSTACK(rKey; eKey); VSTACK(rKey; eKey) \u003c> \"\")));\n  R; LAMBDA(c; ARRAYFORMULA(IFERROR(VLOOKUP(keys; HSTACK(rKey; roster); c + 1; FALSE); \"\")));\n  E; LAMBDA(c; ARRAYFORMULA(IFERROR(VLOOKUP(keys; HSTACK(eKey; eng);    c + 1; FALSE); \"\")));\n  submitted; E(1);\n  score;     E(42);\n  status; IF(submitted = \"\"; \"Pending Self-Assessment\";\n          IF(R(7) = \"Complete\"; \"Evaluated\"; \"Pending Manager Review\"));\n  VSTACK(\n    {\"Email\"\\\"Candidate Name\"\\\"Discipline\"\\\"Role\"\\\"Hiring Manager\"\\\"Invited On\"\\\"Evaluation Status\"\\\n     \"Submitted On\"\\\"Match Score\"\\\"Critical Gaps\"\\\"Readiness\"\\\"Meets Threshold\"};\n    HSTACK(keys;\n      IF(R(1) \u003c> \"\"; R(1); E(3));\n      IF(R(3) \u003c> \"\"; R(3); E(4));\n      IF(E(5) \u003c> \"\"; E(5); R(4));\n      R(5); R(6); status; submitted;\n      IF(ISNUMBER(score); score; \"\");\n      E(43); E(45); IF(E(46) = \"\"; \"No\"; E(46))))\n))"}</script>
 <script>
 (function(){
   var KEY='cm-guide-done';
@@ -874,6 +893,20 @@ Priya Nair	priya.nair@example.com	Operations	Operations Manager	You	2026-09-15	P
     });
   });
   render();
+
+  var LKEY='cm-guide-locale', eu={};
+  try{eu=JSON.parse(document.getElementById('eu-data').textContent);}catch(e){}
+  var us={}; Object.keys(eu).forEach(function(id){var el=document.getElementById(id); if(el) us[id]=el.textContent;});
+  function setLocale(v){
+    Object.keys(eu).forEach(function(id){var el=document.getElementById(id); if(el) el.textContent=(v==='eu'?eu[id]:us[id]);});
+    document.querySelectorAll('.cp-head > .lc').forEach(function(tag){ tag.textContent=(v==='eu'?'EU ;':'US ,'); });
+  }
+  var saved='us'; try{saved=localStorage.getItem(LKEY)||'us';}catch(e){}
+  document.querySelectorAll('input[name=loc]').forEach(function(r){
+    r.checked=(r.value===saved);
+    r.addEventListener('change',function(){ if(!r.checked) return; setLocale(r.value); try{localStorage.setItem(LKEY,r.value);}catch(e){} });
+  });
+  setLocale(saved);
 
   document.querySelectorAll('button.copy').forEach(function(btn){
     var label=btn.textContent;

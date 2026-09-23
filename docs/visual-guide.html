@@ -804,7 +804,12 @@ function diagnose() {
   if (responses &amp;&amp; engine) {
     const row = responses.getLastRow();
     check(row &gt;= 2, 'Latest response is on row ' + row + (row &lt; 2 ? ' (no responses yet)' : ''));
+    out.push('ℹ️ Algorithm Engine!A1 formula: ' + (engine.getRange('A1').getFormula() || '(none)'));
     if (row &gt;= 2) {
+      const hdr = responses.getRange(1, 1, 1, 6).getDisplayValues()[0];
+      const val = responses.getRange(row, 1, 1, 6).getDisplayValues()[0];
+      out.push('ℹ️ "' + responses.getName() + '" row ' + row + ': ' +
+               hdr.map((h, i) =&gt; String.fromCharCode(65 + i) + ' [' + h + '] = "' + val[i] + '"').join(' | '));
       const d = engine.getRange(row, 1, 1, CFG.COL.ALERT).getValues()[0];
       check(d[CFG.COL.ROLE - 1] !== '', 'Engine row ' + row + ' role: "' + d[CFG.COL.ROLE - 1] + '"');
       check(typeof d[CFG.COL.MATCH - 1] === 'number',

@@ -196,19 +196,24 @@ with no required level are left out.
 
 `A Candidate Name | B Email | C Discipline | D Target Role | E Hiring Manager | F Invited On (date) | G Manager Review (dropdown: Pending / Complete)`
 
-You can start it from the *Successors* list in *Talent Review WS 2026*.
+You can start it from the *Successors* list in *Talent Review WS 2026*. Candidates are matched to
+form submissions by **email**, or by **name** (not case-sensitive) when there's no email. If the form
+doesn't collect emails, leave column B empty so both sides match by name.
 
 ## 6. `Dashboard_Feed` — cell A1 (the Looker Studio data source)
 
 One row per candidate: everyone on the roster, plus anyone who submitted without being on it.
-It uses each person's latest submission and works out the status. The roster needs at least one row.
+It uses each person's latest submission and works out the status. The first line says where the
+responses keep Email and Name (`engMail, 2, engName, 3` = Email in B, Name in C). If your form put
+**Name in B and Email in C**, change it to `engMail, 3, engName, 2`.
 
 ```
 =ARRAYFORMULA(LET(
-  roster, IFERROR(FILTER(Candidate_Roster!A2:G, Candidate_Roster!B2:B <> "")),
-  eng,    IFERROR(SORT(FILTER('Algorithm Engine'!A2:AT, 'Algorithm Engine'!B2:B <> ""), 1, FALSE)),
-  rKey,   IFERROR(LOWER(TRIM(CHOOSECOLS(roster, 2))), ""),
-  eKey,   IFERROR(LOWER(TRIM(CHOOSECOLS(eng, 2))), ""),
+  engMail, 2, engName, 3,
+  roster, IFERROR(FILTER(Candidate_Roster!A2:G, Candidate_Roster!A2:A <> "")),
+  eng,    IFERROR(SORT(FILTER('Algorithm Engine'!A2:AT, 'Algorithm Engine'!A2:A <> ""), 1, FALSE)),
+  rKey,   IFERROR(LOWER(TRIM(IF(CHOOSECOLS(roster, 2) <> "", CHOOSECOLS(roster, 2), CHOOSECOLS(roster, 1)))), ""),
+  eKey,   IFERROR(LOWER(TRIM(IF(CHOOSECOLS(eng, engMail) <> "", CHOOSECOLS(eng, engMail), CHOOSECOLS(eng, engName)))), ""),
   keys,   SORT(UNIQUE(FILTER(VSTACK(rKey, eKey), VSTACK(rKey, eKey) <> ""))),
   R, LAMBDA(c, ARRAYFORMULA(IFERROR(VLOOKUP(keys, HSTACK(rKey, roster), c + 1, FALSE), ""))),
   E, LAMBDA(c, ARRAYFORMULA(IFERROR(VLOOKUP(keys, HSTACK(eKey, eng),    c + 1, FALSE), ""))),
@@ -219,15 +224,19 @@ It uses each person's latest submission and works out the status. The roster nee
   VSTACK(
     {"Email","Candidate Name","Discipline","Role","Hiring Manager","Invited On","Evaluation Status",
      "Submitted On","Match Score","Critical Gaps","Readiness","Meets Threshold"},
-    HSTACK(keys,
-      IF(R(1) <> "", R(1), E(3)),
+    HSTACK(
+      IF(R(2) <> "", R(2), E(engMail)),
+      IF(R(1) <> "", R(1), E(engName)),
       IF(R(3) <> "", R(3), E(4)),
       IF(E(5) <> "", E(5), R(4)),
-      R(5), R(6), status, submitted,
+      R(5),
+      IF(R(6) = "", "", TO_DATE(R(6))),
+      status,
+      IF(submitted = "", "", TO_DATE(submitted)),
       IF(ISNUMBER(score), score, ""),
       E(43), E(45), IF(E(46) = "", "No", E(46))))
 ))
 ```
 
-`R(n)` = roster column *n*; `E(n)` = Algorithm Engine column *n* (42 Match, 43 Critical Gaps,
-45 Readiness, 46 Meets Threshold).
+`R(n)` = roster column *n*; `E(n)` = Algorithm Engine column *n* (1 Timestamp, 4 Discipline,
+5 Role, 42 Match, 43 Critical Gaps, 45 Readiness, 46 Meets Threshold).

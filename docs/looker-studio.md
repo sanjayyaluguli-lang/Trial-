@@ -1,5 +1,7 @@
 # Looker Studio Dashboard
 
+An illustrated version of these steps is in [`looker-visual-guide.html`](looker-visual-guide.html).
+
 ## 1. Data source prep
 
 Point the dashboard at the **`Dashboard_Feed`** tab, not `Algorithm Engine`. The engine only holds
@@ -20,7 +22,7 @@ Tick "Use first row as headers" and Connect.
 |---|---|
 | Match Score | Number ▸ **Percent** |
 | Invited On | **Date** |
-| Submitted On | **Date & Time** |
+| Submitted On | **Date** |
 | Critical Gaps | Number |
 
 ### Data source settings

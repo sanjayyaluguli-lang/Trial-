@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Competency Dashboard Setup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#F4F6F3; --surface:#FFFFFF; --sunk:#EDF0EB; --ink:#1C2321; --ink-2:#4F5A56; --ink-3:#7A8580;
+  --line:#DCE1DB; --accent:#1F5FAD; --mark:#E0590F; --mark-soft:rgba(224,89,15,.14);
+  --ok:#1E7B45; --ok-soft:#E3F2E8; --warn:#9A5200; --warn-soft:#FBEFDD; --bad:#B3261E; --bad-soft:#FBE7E5;
+  --sheets:#188038; --forms:#6F42C1; --script:#1A73E8; --gmail:#C5221F; --drive:#E8A600; --looker:#4285F4;
+  --grid-head:#F1F3F1; --sel:#E6F0FC;
+  --font-d:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-b:"Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-m:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#111514; --surface:#1A201E; --sunk:#141917; --ink:#E5EBE8; --ink-2:#A6B1AC; --ink-3:#7E8984;
+    --line:#2D3633; --accent:#8AB8F2; --mark:#FF8C4D; --mark-soft:rgba(255,140,77,.16);
+    --ok:#62C98E; --ok-soft:#173325; --warn:#F0AA5A; --warn-soft:#352817; --bad:#F28B82; --bad-soft:#3A1D1B;
+    --sheets:#5BB974; --forms:#B39DDB; --script:#8AB4F8; --gmail:#F28B82; --drive:#FDD663; --looker:#8AB4F8;
+    --grid-head:#20272A; --sel:#1C2B3D;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#111514; --surface:#1A201E; --sunk:#141917; --ink:#E5EBE8; --ink-2:#A6B1AC; --ink-3:#7E8984;
+  --line:#2D3633; --accent:#8AB8F2; --mark:#FF8C4D; --mark-soft:rgba(255,140,77,.16);
+  --ok:#62C98E; --ok-soft:#173325; --warn:#F0AA5A; --warn-soft:#352817; --bad:#F28B82; --bad-soft:#3A1D1B;
+  --sheets:#5BB974; --forms:#B39DDB; --script:#8AB4F8; --gmail:#F28B82; --drive:#FDD663; --looker:#8AB4F8;
+  --grid-head:#20272A; --sel:#1C2B3D;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-b);font-size:16px;line-height:1.55;padding-inline:16px;padding-block:0 64px}
+a{color:var(--accent)}
+code,kbd,.mono{font-family:var(--font-m);font-size:.86em}
+code{background:var(--sunk);padding:.08em .35em;border-radius:4px}
+kbd{border:1px solid var(--line);border-bottom-width:2px;padding:0 .35em;border-radius:4px;background:var(--surface)}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(1.9rem,4.4vw,2.8rem);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(1.4rem,3vw,1.85rem);font-weight:700}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0}
+.wrap{max-width:1180px;margin:0 auto}
+
+/* header */
+header.top{padding-block:40px 28px;display:grid;gap:14px;max-width:760px}
+.eyebrow{font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+.lede{font-size:1.1rem;color:var(--ink-2);max-width:65ch}
+.facts{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--ink-2);font-size:.92rem}
+.facts b{color:var(--ink)}
+
+/* flow */
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin-block:8px 6px}
+.flow .node{flex:1 1 130px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 12px;display:grid;gap:2px;position:relative}
+.flow .node small{color:var(--ink-3);font-size:.8rem;line-height:1.3}
+.flow .node b{font-size:.95rem}
+.flow .node::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:2px;background:var(--c)}
+.flow .arr{align-self:center;color:var(--ink-3);font-family:var(--font-m)}
+@media (max-width:720px){.flow .arr{display:none}}
+
+.note{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:12px 14px;display:grid;gap:4px;font-size:.95rem}
+.note.warn{background:var(--warn-soft);border-color:transparent}
+.note.ok{background:var(--ok-soft);border-color:transparent}
+.note.bad{background:var(--bad-soft);border-color:transparent}
+.note b.t{font-weight:700}
+
+/* layout */
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px;align-items:start;margin-top:28px}
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);display:grid;gap:4px;font-size:.93rem}
+nav.rail .prog{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:10px}
+nav.rail .prog i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+nav.rail .proglabel{font-size:.8rem;color:var(--ink-3);margin-bottom:4px}
+nav.rail a{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:center;text-decoration:none;color:var(--ink-2);padding:6px 8px;border-radius:6px}
+nav.rail a:hover{background:var(--surface);color:var(--ink)}
+nav.rail a .n{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.72rem;font-weight:700;font-family:var(--font-m)}
+nav.rail a.done .n{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+nav.rail a.done{color:var(--ink-3)}
+@media (max-width:960px){
+  .layout{grid-template-columns:minmax(0,1fr);gap:20px}
+  nav.rail{position:static;display:flex;flex-wrap:wrap;gap:6px}
+  nav.rail .prog,nav.rail .proglabel{flex-basis:100%}
+  nav.rail a{grid-template-columns:auto auto;background:var(--surface);border:1px solid var(--line);padding:4px 10px 4px 6px}
+}
+
+/* steps */
+main{display:grid;gap:56px;min-width:0}
+section.step{display:grid;gap:18px;scroll-margin-top:20px;min-width:0}
+.step-head{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:baseline}
+.step-head .num{font-family:var(--font-d);font-weight:700;font-size:2.1rem;color:var(--ink-3);line-height:1}
+.step-head .meta{grid-column:2;display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--ink-3);font-size:.88rem}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;letter-spacing:.03em;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);background:var(--surface)}
+.tag::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--c)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);gap:24px;align-items:start}
+@media (max-width:860px){.two{grid-template-columns:minmax(0,1fr)}}
+ol.do{margin:0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:d}
+ol.do>li{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start}
+ol.do>li>.pin{margin-top:1px}
+ol.do li ul{margin:.3em 0 0;padding-left:1.1em;color:var(--ink-2)}
+.pin{width:22px;height:22px;border-radius:50%;background:var(--mark);color:#fff;font-weight:700;font-size:.74rem;display:inline-grid;place-items:center;font-family:var(--font-m);flex:none}
+.done-row{display:flex;align-items:center;gap:10px;padding-top:4px}
+.done-row label{display:inline-flex;gap:8px;align-items:center;cursor:pointer;font-weight:600;border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:8px}
+.done-row input{width:18px;height:18px;accent-color:var(--ok)}
+.done-row input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* mock window */
+figure.mock{margin:0;display:grid;gap:6px;min-width:0}
+figure.mock figcaption{font-size:.8rem;color:var(--ink-3)}
+.win{border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px -12px rgba(0,0,0,.12);font-size:13px;line-height:1.4}
+.win-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--sunk);color:var(--ink-2);font-size:12.5px;white-space:nowrap;overflow:hidden}
+.win-bar .ico{width:16px;height:16px;border-radius:3px;background:var(--c);flex:none}
+.win-bar .ttl{font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+.win-body{padding:12px;position:relative}
+.scroll{overflow-x:auto}
+.menubar{display:flex;gap:14px;padding:6px 12px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink-2);flex-wrap:wrap}
+.menubar span{padding:2px 6px;border-radius:4px}
+.menu{border:1px solid var(--line);border-radius:6px;background:var(--surface);box-shadow:0 6px 20px -8px rgba(0,0,0,.25);width:min(260px,100%);padding:4px 0;font-size:12.5px}
+.menu div{padding:6px 14px;color:var(--ink-2);display:flex;justify-content:space-between;gap:12px}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.hl{outline:2px solid var(--mark);outline-offset:1px;background:var(--mark-soft)!important;color:var(--ink)!important;border-radius:4px;position:relative}
+.pinned{display:inline-flex;align-items:center;gap:6px}
+.btn-mock{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:18px;padding:6px 14px;font-weight:600;background:var(--surface);color:var(--ink)}
+.btn-mock.primary{background:var(--script);border-color:var(--script);color:#fff}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.stack{display:grid;gap:10px}
+.muted{color:var(--ink-3)}
+
+/* sheet grid */
+table.grid{border-collapse:collapse;font-family:var(--font-m);font-size:11.5px;min-width:100%}
+table.grid th,table.grid td{border:1px solid var(--line);padding:4px 8px;white-space:nowrap;text-align:left}
+table.grid thead th{background:var(--grid-head);color:var(--ink-3);font-weight:400;text-align:center}
+table.grid td.rn{background:var(--grid-head);color:var(--ink-3);text-align:center;width:28px}
+table.grid td.h{font-weight:600;color:var(--ink)}
+table.grid td.sel{background:var(--sel);outline:2px solid var(--script);outline-offset:-2px}
+table.grid td.good{color:var(--ok);font-weight:600}
+table.grid td.hlc{background:var(--mark-soft);outline:2px solid var(--mark);outline-offset:-2px;color:var(--ink);font-weight:600}
+.fbar{display:flex;gap:8px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line);font-family:var(--font-m);font-size:11.5px;color:var(--ink-2);white-space:nowrap;overflow:hidden}
+.fbar .ref{border-right:1px solid var(--line);padding-right:8px;color:var(--ink)}
+.fbar .fx{color:var(--ink-3);font-style:italic}
+.tabs{display:flex;gap:2px;padding:6px 8px 0;border-top:1px solid var(--line);background:var(--sunk);overflow-x:auto;font-size:12px}
+.tabs span{padding:5px 10px;border-radius:6px 6px 0 0;color:var(--ink-2);white-space:nowrap}
+.tabs span.on{background:var(--surface);color:var(--sheets);font-weight:600;box-shadow:inset 0 -2px 0 var(--sheets)}
+.tabs span.new{outline:2px dashed var(--mark);outline-offset:-3px;color:var(--ink)}
+
+/* forms mock */
+.fcard{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:14px 16px;display:grid;gap:10px}
+.fcard.top{border-top:8px solid var(--forms)}
+.fcard .q{font-size:15px;font-weight:600;color:var(--ink)}
+.fcard .d{color:var(--ink-2);font-size:12.5px;white-space:pre-line}
+.scale{display:grid;grid-template-columns:auto repeat(4,1fr) auto;gap:6px;align-items:end;text-align:center;font-size:12px;color:var(--ink-2)}
+.scale .r{display:grid;gap:4px;justify-items:center}
+.radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--ink-3)}
+.radio.on{border-color:var(--forms);box-shadow:inset 0 0 0 3px var(--surface),inset 0 0 0 9px var(--forms)}
+.fsel{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:4px;padding:5px 10px;font-size:12.5px}
+.toggle{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+.toggle:last-child{border-bottom:0}
+.sw{width:34px;height:14px;border-radius:7px;background:var(--line);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:-3px;left:-2px;width:20px;height:20px;border-radius:50%;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.sw.on{background:color-mix(in srgb,var(--forms) 45%,transparent)}
+.sw.on::after{left:16px;background:var(--forms)}
+
+/* script mock */
+.ide{display:grid;grid-template-columns:44px minmax(0,1fr)}
+.ide .side{background:var(--sunk);border-right:1px solid var(--line);display:grid;align-content:start;gap:4px;padding:8px 4px;justify-items:center;font-size:10px;color:var(--ink-3)}
+.ide .side span{width:32px;height:28px;border-radius:6px;display:grid;place-items:center;font-size:14px}
+.ide .side span.on{background:var(--sel);color:var(--script)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12.5px}
+.toolbar .tb{padding:3px 8px;border-radius:4px;color:var(--ink-2);display:inline-flex;gap:4px;align-items:center}
+pre.code{margin:0;padding:10px 12px;font-family:var(--font-m);font-size:11.5px;line-height:1.6;color:var(--ink-2);overflow-x:auto;background:var(--surface)}
+pre.code .ln{color:var(--ink-3);user-select:none;display:inline-block;width:2.2em}
+pre.code .k{color:var(--forms)} pre.code .s{color:var(--sheets)} pre.code .c{color:var(--ink-3)}
+pre.code .hline{background:var(--mark-soft);box-shadow:inset 3px 0 0 var(--mark);display:block;margin-inline:-12px;padding-inline:12px}
+
+/* consent */
+.consent{max-width:380px;border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:10px;background:var(--surface)}
+.consent .gw{font-size:15px;font-weight:600}
+.consent .lnk{color:var(--accent);font-weight:600;font-size:12.5px}
+
+/* gmail */
+.mail-row{display:grid;grid-template-columns:auto 110px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px;white-space:nowrap}
+.mail-row .star{color:var(--ink-3)}
+.mail-row .snip{overflow:hidden;text-overflow:ellipsis;color:var(--ink-2)}
+.mail-row.unread{font-weight:700;background:var(--sel)}
+.mail-row.unread .snip b{color:var(--ink)}
+.mail-open{padding:14px 16px;display:grid;gap:8px;font-size:13px}
+.mail-open .subj{font-size:17px;font-family:var(--font-d);font-weight:600}
+.mail-open ul{margin:0;padding-left:1.2em}
+
+/* copy blocks */
+.cp{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden;min-width:0}
+.cp-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 8px 6px 12px;border-bottom:1px solid var(--line);background:var(--sunk);font-size:.85rem}
+.cp-head .where{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cell{font-family:var(--font-m);font-weight:600;font-size:.8rem;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--sheets)}
+.cp pre{margin:0;padding:10px 12px;font-family:var(--font-m);font-size:12px;line-height:1.55;overflow:auto;max-height:260px;color:var(--ink)}
+.cp.tall pre{max-height:360px}
+button.copy{font:inherit;font-size:.82rem;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+button.copy:hover{border-color:var(--accent);color:var(--accent)}
+button.copy:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.copy.ok{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.cp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px}
+
+details.more{border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+details.more summary{cursor:pointer;padding:10px 14px;font-weight:600}
+details.more summary:focus-visible{outline:2px solid var(--accent)}
+details.more>div{padding:0 14px 14px;display:grid;gap:12px}
+
+table.plain{border-collapse:collapse;width:100%;font-size:.93rem}
+table.plain th,table.plain td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.plain th{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.expect td:last-child{font-family:var(--font-m);font-size:.86rem}
+footer{margin-top:56px;color:var(--ink-3);font-size:.88rem;border-top:1px solid var(--line);padding-top:16px}
+.locale{display:grid;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:12px 14px}
+.locale .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;width:max-content;max-width:100%}
+.locale .seg label{display:inline-flex;gap:6px;align-items:center;padding:6px 12px;cursor:pointer;font-weight:600;font-size:.92rem}
+.locale .seg label+label{border-left:1px solid var(--line)}
+.locale .seg input{position:absolute;opacity:0;pointer-events:none}
+.locale .seg label:has(input:checked){background:var(--accent);color:var(--surface)}
+.locale .seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:-2px}
+.locale small{color:var(--ink-2);font-size:.9rem}
+.lc{font-family:var(--font-m);font-size:.72rem;font-weight:600;color:var(--ink-3);border:1px solid var(--line);border-radius:4px;padding:0 5px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+:root{--dim:#188038;--dim-soft:#E6F4EA;--met:#1A73E8;--met-soft:#E8F0FE;--bar1:#1A73E8;--bar2:#9AA8B8}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--dim:#5BB974;--dim-soft:#16301F;--met:#8AB4F8;--met-soft:#1A2A40;--bar1:#8AB4F8;--bar2:#4E5A66}}
+:root[data-theme="dark"]{--dim:#5BB974;--dim-soft:#16301F;--met:#8AB4F8;--met-soft:#1A2A40;--bar1:#8AB4F8;--bar2:#4E5A66}
+.de{font-size:.8em;color:var(--ink-3);font-weight:400;white-space:nowrap}
+.lk{display:grid;grid-template-columns:minmax(0,1fr) 240px}
+@media (max-width:560px){.lk{grid-template-columns:minmax(0,1fr)}}
+.lk .canvas{background:var(--sunk);padding:14px;display:grid;gap:10px;align-content:start;min-height:180px}
+.lk .panel{border-left:1px solid var(--line);padding:10px 12px;display:grid;gap:10px;align-content:start;font-size:12.5px;background:var(--surface)}
+@media (max-width:560px){.lk .panel{border-left:0;border-top:1px solid var(--line)}}
+.panel .tabs2{display:flex;gap:14px;border-bottom:1px solid var(--line);padding-bottom:6px;font-weight:600}
+.panel .tabs2 span:first-child{color:var(--met);box-shadow:inset 0 -2px 0 var(--met);padding-bottom:4px}
+.panel .lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+.chip{display:flex;align-items:center;gap:6px;border-radius:14px;padding:4px 10px;font-size:12px;font-weight:600;border:1px solid transparent}
+.chip.dim{background:var(--dim-soft);color:var(--dim)}
+.chip.met{background:var(--met-soft);color:var(--met)}
+.chip .agg{font-family:var(--font-m);font-size:10px;font-weight:600;opacity:.85;border:1px solid currentColor;border-radius:3px;padding:0 4px}
+.chip .ty{font-family:var(--font-m);font-size:10px;opacity:.8}
+.chip.add{border:1px dashed var(--line);color:var(--ink-3);background:transparent;font-weight:400}
+.lk-toolbar{display:flex;flex-wrap:wrap;gap:6px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink-2)}
+.lk-toolbar span{padding:3px 8px;border-radius:4px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px 12px;display:grid;gap:6px;min-width:0}
+.card .cap{font-size:11.5px;color:var(--ink-3)}
+.card .big{font-family:var(--font-d);font-size:28px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.sc-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.bars{display:grid;gap:10px;font-size:12px}
+.bars .grp{display:grid;grid-template-columns:110px 1fr;gap:8px;align-items:center}
+.bars .track{display:grid;gap:3px}
+.bars .b{height:12px;border-radius:0 3px 3px 0;min-width:2px;display:flex;align-items:center;justify-content:flex-end;padding-right:4px;font-size:10px;color:#fff;font-family:var(--font-m)}
+.bars .b.s1{background:var(--bar1)} .bars .b.s2{background:var(--bar2)}
+.legend{display:flex;gap:14px;font-size:11.5px;color:var(--ink-2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.donut{width:110px;height:110px;border-radius:50%;background:conic-gradient(var(--c1) 0 25%,var(--c2) 0 50%,var(--c3) 0 75%,var(--c4) 0 100%);position:relative;flex:none;--c1:#1A73E8;--c2:#188038;--c3:#E37400;--c4:#8E44AD}
+.donut::after{content:"";position:absolute;inset:28px;border-radius:50%;background:var(--surface)}
+.dl{display:grid;gap:4px;font-size:12px}
+.dl i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.ctl{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:5px 10px;font-size:12px}
+.ctl b{font-weight:600}
+.conn{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line)}
+@media (max-width:560px){.conn{grid-template-columns:minmax(0,1fr)}}
+.conn>div{border-right:1px solid var(--line);padding:8px 0;font-size:12.5px;min-width:0}
+.conn>div:last-child{border-right:0}
+.conn .h{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;padding:0 12px 6px}
+.conn .it{padding:5px 12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conn .opt{padding:4px 12px;display:flex;gap:8px;align-items:center;color:var(--ink-2)}
+.box{width:14px;height:14px;border:2px solid var(--ink-3);border-radius:3px;flex:none}
+.box.on{background:var(--met);border-color:var(--met);box-shadow:inset 0 0 0 2px var(--surface)}
+.fields td .dd{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:4px;padding:2px 8px;font-family:var(--font-b)}
+.formula-box{font-family:var(--font-m);font-size:11.5px;border:1px solid var(--line);border-radius:4px;padding:8px 10px;background:var(--sunk);white-space:pre-wrap;color:var(--ink)}
+.filt{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px}
+.filt .dd{border:1px solid var(--line);border-radius:4px;padding:3px 8px;background:var(--surface)}
+.opts{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.opts .locale{flex:1 1 280px;min-width:0}
+.opts .seg{width:auto;flex-wrap:wrap}
+header.top{min-width:0}
+header.top>*{min-width:0}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Role Competency Matching System · Step 7 in detail</div>
+  <h1>Build the recruiting dashboard in Looker Studio</h1>
+  <p class="lede">You'll connect Looker Studio to one tab of your spreadsheet and add five pieces: three scorecards, a bar chart by role, a table of who's still missing, a discipline donut, and two filters. Orange markers show where to click. Grey text after a label is what it's called in the German interface.</p>
+  <div class="facts"><span><b>About 20 min</b></span><span><b>You need:</b> Steps 1–6 working, and at least one form response</span><span><b>Cost:</b> free</span></div>
+  <div class="opts">
+    <div class="locale" role="group" aria-labelledby="loc-t">
+      <b id="loc-t">Formula style</b>
+      <div class="seg">
+        <label><input type="radio" name="loc" id="loc-us" value="us" checked> US / UK &nbsp;<span class="lc">A1, B1</span></label>
+        <label><input type="radio" name="loc" id="loc-eu" value="eu"> European &nbsp;<span class="lc">A1; B1</span></label>
+      </div>
+    </div>
+    <div class="locale" role="group" aria-labelledby="lay-t">
+      <b id="lay-t">Your responses tab</b>
+      <div class="seg">
+        <label><input type="radio" name="lay" id="lay-std" value="std" checked> Email in B, Name in C</label>
+        <label><input type="radio" name="lay" id="lay-nb" value="nb"> Name in B, Email in C</label>
+      </div>
+    </div>
+  </div>
+  <div class="note"><b class="t">Your sheet (from the file you sent) has Name in B and Email in C</b><span>Pick <b>Name in B, Email in C</b> and <b>European</b> above. The Dashboard_Feed formula below then fits your sheet as it is.</span></div>
+</header>
+
+<figure class="mock" style="max-width:1000px">
+  <div class="win" style="--c:var(--looker)">
+    <div class="win-bar"><span class="ico"></span><span class="ttl">Competency Dashboard</span><span class="muted" style="margin-left:auto">what you'll have at the end</span></div>
+    <div class="lk-toolbar"><span class="ctl"><b>Role</b> All ▾</span><span class="ctl"><b>Discipline</b> All ▾</span></div>
+    <div class="canvas" style="background:var(--sunk);padding:14px;display:grid;gap:10px">
+      <div class="sc-row">
+        <div class="card"><span class="cap">Candidates in pipeline</span><span class="big">4</span></div>
+        <div class="card"><span class="cap">Self-assessments done</span><span class="big">3</span></div>
+        <div class="card"><span class="cap">Fully evaluated</span><span class="big">1</span></div>
+      </div>
+      <div class="two" style="gap:10px">
+        <div class="card"><span class="cap">Met threshold vs assessed, by role</span>
+          <div class="bars">
+            <div class="grp"><span>Senior PM</span><div class="track"><span class="b s1" style="width:2px"></span><span class="b s2" style="width:90%">3</span></div></div>
+            <div class="grp"><span>Quality Lead</span><div class="track"><span class="b s1" style="width:2px"></span><span class="b s2" style="width:2px"></span></div></div>
+          </div>
+          <div class="legend"><span><i style="background:var(--bar1)"></i>Met Threshold</span><span><i style="background:var(--bar2)"></i>Assessed</span></div>
+        </div>
+        <div class="card"><span class="cap">Candidates by discipline</span>
+          <div class="row" style="gap:16px"><div class="donut" aria-hidden="true"></div>
+            <div class="dl"><span><i style="background:#1A73E8"></i>Software 25%</span><span><i style="background:#188038"></i>System 25%</span><span><i style="background:#E37400"></i>System Validation 25%</span><span><i style="background:#8E44AD"></i>Quality 25%</span></div></div>
+        </div>
+      </div>
+      <div class="card"><span class="cap">Candidates missing an evaluation</span>
+        <div class="scroll"><table class="grid" style="font-family:var(--font-b);font-size:12px">
+          <thead><tr><th>Candidate Name</th><th>Role</th><th>Evaluation Status</th><th>Days Waiting</th></tr></thead>
+          <tbody>
+            <tr><td>Test Candidate</td><td>Senior PM</td><td>Pending Manager Review</td><td class="hlc">13</td></tr>
+            <tr><td>Jessica</td><td>Senior PM</td><td>Pending Manager Review</td><td class="hlc">8</td></tr>
+            <tr><td>Alex Rivera</td><td>Quality Lead</td><td>Pending Self-Assessment</td><td>5</td></tr>
+          </tbody></table></div>
+      </div>
+    </div>
+  </div>
+  <figcaption>Illustration built from your three test responses plus one sample roster entry (Alex Rivera). Nobody meets the 80% threshold yet, so the "Met Threshold" bars are empty. Days Waiting counts from each Invited On date to today.</figcaption>
+</figure>
+
+<div class="layout">
+<nav class="rail" aria-label="Steps">
+  <div class="proglabel" id="proglabel">0 of 8 steps done</div>
+  <div class="prog"><i id="progbar"></i></div>
+  <a href="#l1" data-s="l1"><span class="n">1</span>Prepare the sheet</a>
+  <a href="#l2" data-s="l2"><span class="n">2</span>Connect Looker Studio</a>
+  <a href="#l3" data-s="l3"><span class="n">3</span>Fix field types</a>
+  <a href="#l4" data-s="l4"><span class="n">4</span>Calculated fields</a>
+  <a href="#l5" data-s="l5"><span class="n">5</span>Scorecards</a>
+  <a href="#l6" data-s="l6"><span class="n">6</span>Bar chart by role</a>
+  <a href="#l7" data-s="l7"><span class="n">7</span>Missing-evaluations table</a>
+  <a href="#l8" data-s="l8"><span class="n">8</span>Donut and filters</a>
+  <a href="#lfix" style="margin-top:6px"><span class="n">?</span>If something's off</a>
+</nav>
+
+<main>
+<!-- 1 -->
+<section class="step" id="l1">
+  <div class="step-head"><span class="num">1</span><h2>Prepare the sheet: roster and feed tabs</h2>
+    <div class="meta"><span class="tag" style="--c:var(--sheets)">Sheets</span><span>5 min</span></div></div>
+  <p style="max-width:65ch">Looker Studio needs <b>one tab with one row per candidate</b>. That includes people who haven't submitted yet, which the Algorithm Engine can't show. <code>Candidate_Roster</code> lists everyone you've invited, and <code>Dashboard_Feed</code> combines it with the form results.</p>
+  <div class="two">
+    <ol class="do">
+      <li><span class="pin">1</span><div>Add a tab named <b>Candidate_Roster</b>. Click <b>A1</b> and paste the sample below. It contains your three test candidates plus one person who hasn't submitted (Alex Rivera).</div></li>
+      <li><span class="pin">2</span><div>Select <b>G2:G</b> ▸ <b>Insert ▸ Dropdown</b> <span class="de">(Einfügen ▸ Drop-down)</span> with the options <code>Pending</code> and <code>Complete</code>. This is the hiring manager's review tick.</div></li>
+      <li><span class="pin">3</span><div>Add a tab named <b>Dashboard_Feed</b>. Click <b>A1</b> and paste the formula below. Set the two switches at the top of the page first.</div></li>
+      <li><span class="pin">4</span><div>Check the result: 4 rows, one per person, with an <b>Evaluation Status</b> for each.</div></li>
+    </ol>
+    <figure class="mock">
+      <div class="win" style="--c:var(--sheets)">
+        <div class="win-bar"><span class="ico"></span><span class="ttl">Competencie Baseline · Dashboard_Feed</span><span class="pin" style="margin-left:auto">4</span></div>
+        <div class="scroll"><table class="grid">
+          <thead><tr><th></th><th>B</th><th>D</th><th>G</th><th>I</th></tr></thead>
+          <tbody>
+            <tr><td class="rn">1</td><td class="h">Candidate Name</td><td class="h">Role</td><td class="h">Evaluation Status</td><td class="h">Match Score</td></tr>
+            <tr><td class="rn">2</td><td>Alex Rivera</td><td>Quality Lead</td><td class="hlc">Pending Self-Assessment</td><td></td></tr>
+            <tr><td class="rn">3</td><td>Jessica</td><td>Senior PM</td><td>Pending Manager Review</td><td>0.713</td></tr>
+            <tr><td class="rn">4</td><td>Test Candidate</td><td>Senior PM</td><td>Pending Manager Review</td><td></td></tr>
+            <tr><td class="rn">5</td><td>Trial candidate 2</td><td>Senior PM</td><td class="good">Evaluated</td><td>0.673</td></tr>
+          </tbody></table></div>
+        <div class="tabs"><span>Algorithm Engine</span><span class="new">Candidate_Roster</span><span class="on new">Dashboard_Feed</span></div>
+      </div>
+      <figcaption>Illustration. Rows are sorted by name. Test Candidate has no score because their form row has no role (fill in E2 on the responses tab).</figcaption>
+    </figure>
+  </div>
+  <div class="cp"><div class="cp-head"><span class="where"><b>Candidate_Roster</b> sample, paste at <span class="cell">A1</span></span><button class="copy" data-copy="t-roster">Copy</button></div><pre id="t-roster">Candidate Name	Email	Discipline	Target Role	Hiring Manager	Invited On	Manager Review
+Jessica		Software	Senior PM	You	2026-09-15	Pending
+Trial candidate 2		System	Senior PM	You	2026-09-15	Complete
+Test Candidate		System Validation	Senior PM	You	2026-09-10	Pending
+Alex Rivera		Quality	Quality Lead	You	2026-09-18	Pending</pre></div>
+  <div class="cp tall"><div class="cp-head"><span class="where"><b>Dashboard_Feed</b> paste at <span class="cell">A1</span></span><span class="lc" id="feed-tag">US · Email B</span><button class="copy" data-copy="t-feed">Copy</button></div><pre id="t-feed">=ARRAYFORMULA(LET(
+  engMail, 2, engName, 3,
+  roster, IFERROR(FILTER(Candidate_Roster!A2:G, Candidate_Roster!A2:A &lt;&gt; "")),
+  eng,    IFERROR(SORT(FILTER('Algorithm Engine'!A2:AT, 'Algorithm Engine'!A2:A &lt;&gt; ""), 1, FALSE)),
+  rKey,   IFERROR(LOWER(TRIM(IF(CHOOSECOLS(roster, 2) &lt;&gt; "", CHOOSECOLS(roster, 2), CHOOSECOLS(roster, 1)))), ""),
+  eKey,   IFERROR(LOWER(TRIM(IF(CHOOSECOLS(eng, engMail) &lt;&gt; "", CHOOSECOLS(eng, engMail), CHOOSECOLS(eng, engName)))), ""),
+  keys,   SORT(UNIQUE(FILTER(VSTACK(rKey, eKey), VSTACK(rKey, eKey) &lt;&gt; ""))),
+  R, LAMBDA(c, ARRAYFORMULA(IFERROR(VLOOKUP(keys, HSTACK(rKey, roster), c + 1, FALSE), ""))),
+  E, LAMBDA(c, ARRAYFORMULA(IFERROR(VLOOKUP(keys, HSTACK(eKey, eng),    c + 1, FALSE), ""))),
+  submitted, E(1),
+  score,     E(42),
+  status, IF(submitted = "", "Pending Self-Assessment",
+          IF(R(7) = "Complete", "Evaluated", "Pending Manager Review")),
+  VSTACK(
+    {"Email","Candidate Name","Discipline","Role","Hiring Manager","Invited On","Evaluation Status",
+     "Submitted On","Match Score","Critical Gaps","Readiness","Meets Threshold"},
+    HSTACK(
+      IF(R(2) &lt;&gt; "", R(2), E(engMail)),
+      IF(R(1) &lt;&gt; "", R(1), E(engName)),
+      IF(R(3) &lt;&gt; "", R(3), E(4)),
+      IF(E(5) &lt;&gt; "", E(5), R(4)),
+      R(5),
+      IF(R(6) = "", "", TO_DATE(R(6))),
+      status,
+      IF(submitted = "", "", TO_DATE(submitted)),
+      IF(ISNUMBER(score), score, ""),
+      E(43), E(45), IF(E(46) = "", "No", E(46))))
+))</pre></div>
+  <div class="note warn"><b class="t">How candidates are matched</b><span>By <b>email</b> if both sides have one, otherwise by <b>name</b> (capital letters don't matter). Your form isn't collecting emails yet, so leave column B of the roster empty for now. Otherwise a roster email and a nameless form row count as two people. Once you turn on email collection, fill in the roster emails.</span></div>
+  <div class="done-row"><label><input type="checkbox" id="d-l1" data-s="l1"> Step 1 done</label></div>
+</section>
+
+<!-- 2 -->
+<section class="step" id="l2">
+  <div class="step-head"><span class="num">2</span><h2>Connect Looker Studio to Dashboard_Feed</h2>
+    <div class="meta"><span class="tag" style="--c:var(--looker)">Looker Studio</span><span>3 min</span></div></div>
+  <div class="two">
+    <ol class="do">
+      <li><span class="pin">1</span><div>Open <a href="https://lookerstudio.google.com" target="_blank" rel="noopener">lookerstudio.google.com</a> with the same Google account. Click <b>Blank report</b> <span class="de">(Leerer Bericht)</span>. The first time, accept the terms and pick your country.</div></li>
+      <li><span class="pin">2</span><div>A panel <i>Add data to report</i> <span class="de">(Daten zum Bericht hinzufügen)</span> opens. Choose <b>Google Sheets</b> <span class="de">(Google Tabellen)</span> and click <b>Authorize</b> if asked.</div></li>
+      <li><span class="pin">3</span><div>Pick <b>Competencie Baseline</b>, then the worksheet <b>Dashboard_Feed</b>.</div></li>
+      <li><span class="pin">4</span><div>Leave <b>Use first row as headers</b> ticked. Click <b>Add</b> <span class="de">(Hinzufügen)</span>, then <b>Add to report</b> in the confirmation.</div></li>
+    </ol>
+    <figure class="mock">
+      <div class="win" style="--c:var(--looker)">
+        <div class="win-bar"><span class="ico"></span><span class="ttl">Add data to report ▸ Google Sheets</span><span class="pin" style="margin-left:auto">2</span></div>
+        <div class="conn">
+          <div><div class="h">Spreadsheet</div><div class="it">Talent Review WS 2026</div><div class="it hl pinned">Competencie Baseline <span class="pin">3</span></div><div class="it">Budget 2026</div></div>
+          <div><div class="h">Worksheet</div><div class="it">Algorithm Engine</div><div class="it">Candidate_Roster</div><div class="it hl">Dashboard_Feed</div><div class="it">Form Responses 1</div></div>
+          <div><div class="h">Options</div><div class="opt"><span class="box on"></span>Use first row as headers</div><div class="opt"><span class="box on"></span>Include hidden and filtered cells</div><div class="opt"><span class="box"></span>Optional range</div></div>
+        </div>
+        <div class="win-body row" style="justify-content:flex-end;border-top:1px solid var(--line)"><span class="btn-mock">Cancel</span><span class="btn-mock primary pinned">Add <span class="pin">4</span></span></div>
+      </div>
+      <figcaption>The Google Sheets connector (illustration). Your other spreadsheets will be listed too.</figcaption>
+    </figure>
+  </div>
+  <p class="muted" style="font-size:.93rem">Looker drops a table onto the page automatically. Delete it (select it, then press <kbd>Del</kbd>) so you start with an empty page.</p>
+  <div class="done-row"><label><input type="checkbox" id="d-l2" data-s="l2"> Step 2 done</label></div>
+</section>
+
+<!-- 3 -->
+<section class="step" id="l3">
+  <div class="step-head"><span class="num">3</span><h2>Fix the field types</h2>
+    <div class="meta"><span class="tag" style="--c:var(--looker)">Looker Studio</span><span>3 min</span></div></div>
+  <div class="two">
+    <ol class="do">
+      <li><span class="pin">1</span><div>Menu <b>Resource ▸ Manage added data sources</b> <span class="de">(Ressource ▸ Hinzugefügte Datenquellen verwalten)</span>, then <b>Edit</b> next to Dashboard_Feed.</div></li>
+      <li><span class="pin">2</span><div>In the <b>Type</b> column <span class="de">(Typ)</span>, change:
+        <ul><li><b>Match Score</b> → Numeric ▸ <b>Percent</b></li><li><b>Invited On</b> → Date &amp; Time ▸ <b>Date</b></li><li><b>Submitted On</b> → Date &amp; Time ▸ <b>Date</b></li><li><b>Critical Gaps</b> → <b>Number</b></li></ul></div></li>
+      <li><span class="pin">3</span><div>At the top, set <b>Data freshness</b> <span class="de">(Datenaktualität)</span> to <b>15 minutes</b>, and <b>Data credentials</b> <span class="de">(Anmeldedaten)</span> to <b>Owner's</b> <span class="de">(Inhaber)</span>, so viewers don't need access to the sheet.</div></li>
+      <li><span class="pin">4</span><div>Stay on this screen for Step 4.</div></li>
+    </ol>
+    <figure class="mock">
+      <div class="win" style="--c:var(--looker)">
+        <div class="win-bar"><span class="ico"></span><span class="ttl">Dashboard_Feed · data source</span><span class="muted pinned" style="margin-left:auto">Data freshness: 15 min <span class="pin">3</span></span></div>
+        <div class="scroll"><table class="grid fields" style="font-family:var(--font-b);font-size:12px">
+          <thead><tr><th>Field</th><th>Type</th><th>Default aggregation</th></tr></thead>
+          <tbody>
+            <tr><td>Candidate Name</td><td><span class="dd">Text ▾</span></td><td class="muted">None</td></tr>
+            <tr><td>Role</td><td><span class="dd">Text ▾</span></td><td class="muted">None</td></tr>
+            <tr><td>Invited On</td><td class="hlc"><span class="dd">📅 Date ▾</span></td><td class="muted">None</td></tr>
+            <tr><td>Evaluation Status</td><td><span class="dd">Text ▾</span></td><td class="muted">None</td></tr>
+            <tr><td>Submitted On</td><td class="hlc"><span class="dd">📅 Date ▾</span></td><td class="muted">None</td></tr>
+            <tr><td>Match Score</td><td class="hlc"><span class="dd">% Percent ▾</span> <span class="pin">2</span></td><td>Average</td></tr>
+            <tr><td>Critical Gaps</td><td><span class="dd">123 Number ▾</span></td><td>Sum</td></tr>
+          </tbody></table></div>
+        <div class="win-body row" style="justify-content:space-between;border-top:1px solid var(--line)"><span class="btn-mock pinned">+ Add a field <span class="pin">4</span></span><span class="btn-mock primary">Done</span></div>
+      </div>
+      <figcaption>The data source field list (illustration, some fields left out).</figcaption>
+    </figure>
+  </div>
+  <div class="done-row"><label><input type="checkbox" id="d-l3" data-s="l3"> Step 3 done</label></div>
+</section>
+
+<!-- 4 -->
+<section class="step" id="l4">
+  <div class="step-head"><span class="num">4</span><h2>Add four calculated fields</h2>
+    <div class="meta"><span class="tag" style="--c:var(--looker)">Looker Studio</span><span>4 min</span></div></div>
+  <div class="two">
+    <ol class="do">
+      <li><span class="pin">1</span><div>On the same screen, click <b>Add a field ▸ Add calculated field</b> <span class="de">(Feld hinzufügen ▸ Berechnetes Feld)</span>.</div></li>
+      <li><span class="pin">2</span><div>Type the <b>Field name</b> exactly as shown below, then paste its <b>Formula</b>. A green tick under the formula means it's valid.</div></li>
+      <li><span class="pin">3</span><div>Click <b>Save</b>, then repeat for the other three. When all four are done, click <b>Done</b> and close the panel.</div></li>
+    </ol>
+    <figure class="mock">
+      <div class="win" style="--c:var(--looker)">
+        <div class="win-bar"><span class="ico"></span><span class="ttl">Add calculated field</span></div>
+        <div class="win-body stack">
+          <div class="stack" style="gap:4px"><span class="lbl muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700">Field name</span><span class="fsel hl pinned" style="width:max-content">Is Qualified <span class="pin">2</span></span></div>
+          <div class="stack" style="gap:4px"><span class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700">Formula</span>
+            <div class="formula-box">CASE WHEN Meets Threshold = "Yes" THEN 1 ELSE 0 END</div>
+            <span style="color:var(--ok);font-size:12px">✓ Valid formula</span></div>
+          <div class="row" style="justify-content:flex-end"><span class="btn-mock primary pinned">Save <span class="pin">3</span></span></div>
+        </div>
+      </div>
+      <figcaption>The calculated field editor (illustration).</figcaption>
+    </figure>
+  </div>
+  <div class="cp-grid">
+    <div class="cp"><div class="cp-head"><span class="where"><b>Is Submitted</b></span><button class="copy" data-copy="c1">Copy</button></div><pre id="c1">CASE WHEN Evaluation Status IN ("Evaluated", "Pending Manager Review") THEN 1 ELSE 0 END</pre></div>
+    <div class="cp"><div class="cp-head"><span class="where"><b>Is Fully Evaluated</b></span><button class="copy" data-copy="c2">Copy</button></div><pre id="c2">CASE WHEN Evaluation Status = "Evaluated" THEN 1 ELSE 0 END</pre></div>
+    <div class="cp"><div class="cp-head"><span class="where"><b>Is Qualified</b></span><button class="copy" data-copy="c3">Copy</button></div><pre id="c3">CASE WHEN Meets Threshold = "Yes" THEN 1 ELSE 0 END</pre></div>
+    <div class="cp"><div class="cp-head"><span class="where"><b>Days Waiting</b></span><button class="copy" data-copy="c4">Copy</button></div><pre id="c4">DATE_DIFF(TODAY(), Invited On)</pre></div>
+  </div>
+  <p class="muted" style="font-size:.93rem">Looker Studio formulas always use commas, even in a European-locale account, so the Formula style switch doesn't change these.</p>
+  <div class="done-row"><label><input type="checkbox" id="d-l4" data-s="l4"> Step 4 done</label></div>
+</section>
+
+<!-- 5 -->
+<section class="step" id="l5">
+  <div class="step-head"><span class="num">5</span><h2>Scorecards: how many candidates are evaluated</h2>
+    <div class="meta"><span class="tag" style="--c:var(--looker)">Looker Studio</span><span>3 min</span></div></div>
+  <div class="two">
+    <ol class="do">
+      <li><span class="pin">1</span><div>Toolbar <b>Add a chart ▸ Scorecard</b> <span class="de">(Diagramm hinzufügen ▸ Kurzübersicht)</span>. Click the canvas to place it.</div></li>
+      <li><span class="pin">2</span><div>In the <b>Setup</b> panel on the right, under <b>Metric</b> <span class="de">(Messwert)</span>, click the field and choose <b>Is Submitted</b>. Its aggregation shows <b>SUM</b>, which is what you want.</div></li>
+      <li><span class="pin">3</span><div>Click the small <b>pencil</b> on the metric chip and rename it <b>Self-assessments done</b>.</div></li>
+      <li><span class="pin">4</span><div>Copy the scorecard twice (<kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>V</kbd>). Set one to <b>Is Fully Evaluated</b> ("Fully evaluated") and the other to <b>Record Count</b> <span class="de">(Datensatzanzahl)</span> ("Candidates in pipeline").</div></li>
+    </ol>
+    <figure class="mock">
+      <div class="win" style="--c:var(--looker)">
+        <div class="win-bar"><span class="ico"></span><span class="ttl">Competency Dashboard · editing</span></div>
+        <div class="lk-toolbar"><span class="hl pinned">Add a chart ▾ <span class="pin">1</span></span><span>Add a control ▾</span></div>
+        <div class="lk">
+          <div class="canvas"><div class="card" style="max-width:200px;outline:2px solid var(--met)"><span class="cap">Self-assessments done</span><span class="big">3</span></div></div>
+          <div class="panel">
+            <div class="tabs2"><span>Setup</span><span class="muted">Style</span></div>
+            <span class="lbl">Data source</span><div class="chip" style="background:var(--sunk);color:var(--ink-2)">Dashboard_Feed</div>
+            <span class="lbl">Metric</span><div class="chip met hl pinned"><span class="agg">SUM</span>Self-assessments done <span class="pin">2</span></div>
+          </div>
+        </div>
+      </div>
+      <figcaption>A scorecard with its Setup panel (illustration). Looker shows metrics in blue and dimensions in green.</figcaption>
+    </figure>
+  </div>
+  <div class="done-row"><label><input type="checkbox" id="d-l5" data-s="l5"> Step 5 done</label></div>
+</section>
+
+<!-- 6 -->
+<section class="step" id="l6">
+  <div class="step-head"><span class="num">6</span><h2>Bar chart: candidates meeting the threshold, by role</h2>
+    <div class="meta"><span class="tag" style="--c:var(--looker)">Looker Studio</span><span>3 min</span></div></div>
+  <div class="two">
+    <ol class="do">
+      <li><span class="pin">1</span><div><b>Add a chart ▸ Bar</b> <span class="de">(Balkendiagramm)</span>. The first icon in the Bar section gives horizontal bars, like the illustration.</div></li>
+      <li><span class="pin">2</span><div><b>Dimension:</b> <b>Role</b>.</div></li>
+      <li><span class="pin">3</span><div><b>Metric:</b> <b>Is Qualified</b> (SUM), renamed <b>Met Threshold</b>. Then <b>Add metric</b>: <b>Is Submitted</b> (SUM), renamed <b>Assessed</b>.</div></li>
+      <li><span class="pin">4</span><div><b>Sort:</b> Met Threshold, Descending. In the <b>Style</b> tab, turn on <b>Show data labels</b>.</div></li>
+    </ol>
+    <figure class="mock">
+      <div class="win" style="--c:var(--looker)">
+        <div class="win-bar"><span class="ico"></span><span class="ttl">Bar chart · Setup</span></div>
+        <div class="lk">
+          <div class="canvas"><div class="card"><div class="bars">
+            <div class="grp"><span>Senior PM</span><div class="track"><span class="b s1" style="width:2px"></span><span class="b s2" style="width:90%">3</span></div></div>
+            <div class="grp"><span>Quality Lead</span><div class="track"><span class="b s1" style="width:2px"></span><span class="b s2" style="width:2px"></span></div></div></div>
+            <div class="legend"><span><i style="background:var(--bar1)"></i>Met Threshold</span><span><i style="background:var(--bar2)"></i>Assessed</span></div></div></div>
+          <div class="panel">
+            <div class="tabs2"><span>Setup</span><span class="muted">Style</span></div>
+            <span class="lbl">Dimension</span><div class="chip dim pinned"><span class="ty">ABC</span>Role <span class="pin">2</span></div>
+            <span class="lbl">Metric</span><div class="chip met pinned"><span class="agg">SUM</span>Met Threshold <span class="pin">3</span></div><div class="chip met"><span class="agg">SUM</span>Assessed</div><div class="chip add">+ Add metric</div>
+            <span class="lbl">Sort</span><div class="chip met pinned"><span class="agg">SUM</span>Met Threshold ↓ <span class="pin">4</span></div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Illustration with your data: 3 Senior PM candidates assessed, none at 80% yet. Quality Lead appears because Alex is on the roster.</figcaption>
+    </figure>
+  </div>
+  <div class="done-row"><label><input type="checkbox" id="d-l6" data-s="l6"> Step 6 done</label></div>
+</section>
+
+<!-- 7 -->
+<section class="step" id="l7">
+  <div class="step-head"><span class="num">7</span><h2>Table: who is still missing an evaluation</h2>
+    <div class="meta"><span class="tag" style="--c:var(--looker)">Looker Studio</span><span>4 min</span></div></div>
+  <div class="two">
+    <ol class="do">
+      <li><span class="pin">1</span><div><b>Add a chart ▸ Table</b> <span class="de">(Tabelle)</span>.</div></li>
+      <li><span class="pin">2</span><div><b>Dimensions:</b> Candidate Name, Role, Discipline, Hiring Manager, Evaluation Status, Invited On. Use <b>Add dimension</b> for each.</div></li>
+      <li><span class="pin">3</span><div><b>Metric:</b> <b>Days Waiting</b>. Click its aggregation badge and choose <b>MAX</b>. Remove <i>Record Count</i> if Looker added it.</div></li>
+      <li><span class="pin">4</span><div>Scroll the Setup panel to <b>Filter</b> ▸ <b>Add a filter</b> <span class="de">(Filter hinzufügen)</span> ▸ <b>Create a filter</b>. Set it up as in the second illustration, name it <b>Missing evaluation</b>, and click <b>Save</b>.</div></li>
+      <li><span class="pin">5</span><div><b>Sort:</b> Days Waiting, Descending. Optionally, in <b>Style ▸ Conditional formatting</b> add a red background when Days Waiting &gt; 7.</div></li>
+    </ol>
+    <div class="stack">
+      <figure class="mock">
+        <div class="win" style="--c:var(--looker)">
+          <div class="win-bar"><span class="ico"></span><span class="ttl">Table · Setup</span></div>
+          <div class="lk">
+            <div class="canvas"><div class="card"><div class="scroll"><table class="grid" style="font-family:var(--font-b);font-size:11.5px">
+              <thead><tr><th>Candidate Name</th><th>Evaluation Status</th><th>Days Waiting</th></tr></thead>
+              <tbody><tr><td>Test Candidate</td><td>Pending Manager Review</td><td class="hlc">13</td></tr><tr><td>Jessica</td><td>Pending Manager Review</td><td class="hlc">8</td></tr><tr><td>Alex Rivera</td><td>Pending Self-Assessment</td><td>5</td></tr></tbody></table></div></div></div>
+            <div class="panel">
+              <div class="tabs2"><span>Setup</span><span class="muted">Style</span></div>
+              <span class="lbl">Dimension</span><div class="chip dim pinned"><span class="ty">ABC</span>Candidate Name <span class="pin">2</span></div><div class="chip dim"><span class="ty">ABC</span>Evaluation Status</div><div class="chip add">+ Add dimension</div>
+              <span class="lbl">Metric</span><div class="chip met hl pinned"><span class="agg">MAX</span>Days Waiting <span class="pin">3</span></div>
+              <span class="lbl">Filter</span><div class="chip hl pinned" style="background:var(--sunk);color:var(--ink)">Missing evaluation <span class="pin">4</span></div>
+            </div>
+          </div>
+        </div>
+      </figure>
+      <figure class="mock">
+        <div class="win" style="--c:var(--looker)">
+          <div class="win-bar"><span class="ico"></span><span class="ttl">Create filter · Missing evaluation</span></div>
+          <div class="win-body stack">
+            <div class="filt"><span class="dd">Include ▾</span><span class="dd">Evaluation Status ▾</span><span class="dd">In ▾</span></div>
+            <div class="filt"><span class="dd hl">Pending Self-Assessment</span><span class="dd hl">Pending Manager Review</span></div>
+            <div class="row" style="justify-content:flex-end"><span class="btn-mock primary">Save</span></div>
+          </div>
+        </div>
+        <figcaption>The filter editor (illustration). Type each value and press Enter. The spelling must match the sheet exactly.</figcaption>
+      </figure>
+    </div>
+  </div>
+  <div class="done-row"><label><input type="checkbox" id="d-l7" data-s="l7"> Step 7 done</label></div>
+</section>
+
+<!-- 8 -->
+<section class="step" id="l8">
+  <div class="step-head"><span class="num">8</span><h2>Discipline donut and the two filters</h2>
+    <div class="meta"><span class="tag" style="--c:var(--looker)">Looker Studio</span><span>4 min</span></div></div>
+  <div class="two">
+    <ol class="do">
+      <li><span class="pin">1</span><div><b>Add a chart ▸ Pie</b> and pick the <b>donut</b> icon <span class="de">(Ringdiagramm)</span>. <b>Dimension:</b> Discipline. <b>Metric:</b> Record Count.</div></li>
+      <li><span class="pin">2</span><div><b>Add a control ▸ Drop-down list</b> <span class="de">(Steuerelement hinzufügen ▸ Drop-down-Liste)</span>. Place it at the top of the page.</div></li>
+      <li><span class="pin">3</span><div><b>Control field:</b> Role. <b>Metric:</b> Record Count, so each option shows how many candidates it has. In <b>Style</b>, turn on <b>Multiple selections</b>.</div></li>
+      <li><span class="pin">4</span><div>Copy the control and change its field to <b>Discipline</b>.</div></li>
+      <li><span class="pin">5</span><div>Click <b>View</b> <span class="de">(Ansehen)</span> at the top right and try the filters. Every chart on the page updates. On a multi-page report, right-click a control ▸ <b>Make report-level</b> <span class="de">(Auf Berichtsebene)</span> so it filters every page.</div></li>
+    </ol>
+    <figure class="mock">
+      <div class="win" style="--c:var(--looker)">
+        <div class="win-bar"><span class="ico"></span><span class="ttl">Drop-down list · Setup</span></div>
+        <div class="lk-toolbar"><span>Add a chart ▾</span><span class="hl pinned">Add a control ▾ <span class="pin">2</span></span></div>
+        <div class="lk">
+          <div class="canvas">
+            <span class="ctl" style="width:max-content;outline:2px solid var(--met)"><b>Role</b> All ▾</span>
+            <div class="menu"><div><span><span class="box on" style="display:inline-block;vertical-align:-2px;margin-right:6px"></span>Senior PM</span><span class="muted">3</span></div><div><span><span class="box on" style="display:inline-block;vertical-align:-2px;margin-right:6px"></span>Quality Lead</span><span class="muted">1</span></div></div>
+          </div>
+          <div class="panel">
+            <div class="tabs2"><span>Setup</span><span class="muted">Style</span></div>
+            <span class="lbl">Control field</span><div class="chip dim hl pinned"><span class="ty">ABC</span>Role <span class="pin">3</span></div>
+            <span class="lbl">Metric</span><div class="chip met"><span class="agg">AUTO</span>Record Count</div>
+          </div>
+        </div>
+      </div>
+      <figcaption>The Role filter open in View mode (illustration). The numbers are candidates per role.</figcaption>
+    </figure>
+  </div>
+  <div class="note ok"><b class="t">Done. Share it with a hiring manager</b><span>Click <b>Share</b> <span class="de">(Freigeben)</span> and add their email. Because you set <b>Owner's credentials</b> in Step 3, they see the dashboard without access to your spreadsheet. New form submissions show up within 15 minutes, or immediately with ⋮ ▸ <b>Refresh data</b> <span class="de">(Daten aktualisieren)</span>.</span></div>
+  <div class="done-row"><label><input type="checkbox" id="d-l8" data-s="l8"> Step 8 done</label></div>
+</section>
+
+<!-- FIX -->
+<section class="step" id="lfix">
+  <div class="step-head"><span class="num">?</span><h2>If something's off</h2></div>
+  <div class="tbl"><table class="plain">
+    <thead><tr><th>What you see</th><th>Likely cause</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>Dashboard_Feed shows a <i>formula parse error</i></td><td>Wrong formula style for your locale</td><td>Switch <b>Formula style</b> to European and copy again</td></tr>
+      <tr><td>Dashboard_Feed shows each person twice</td><td>The roster has an email but the form row doesn't (or the name is spelled differently)</td><td>Leave roster emails empty until the form collects them, and match the names exactly</td></tr>
+      <tr><td>Names appear in the Email column</td><td>The wrong column-order switch</td><td>Pick <b>Name in B, Email in C</b> and copy the formula again</td></tr>
+      <tr><td>Everyone is <i>Pending Self-Assessment</i></td><td>Dashboard_Feed can't read the engine</td><td>Check that <code>Algorithm Engine</code> row 2 onwards has data, then the column-order switch</td></tr>
+      <tr><td>Days Waiting is empty or <code>null</code></td><td>Invited On isn't a date in the sheet, or its field type isn't Date</td><td>Type dates as <code>2026-09-15</code> in the roster, and set the type to Date (Step 3)</td></tr>
+      <tr><td>Match Score shows 67 instead of 67%</td><td>Its type is still Number</td><td>Set Match Score to Percent (Step 3)</td></tr>
+      <tr><td>A new field or column doesn't appear in Looker</td><td>Looker cached the old column list</td><td>Resource ▸ Manage added data sources ▸ Edit ▸ <b>Refresh fields</b></td></tr>
+      <tr><td>The filter hides everything</td><td>A typo in the filter values</td><td>Edit the filter and pick the values from the list instead of typing them</td></tr>
+    </tbody></table></div>
+</section>
+
+<footer>Screens here are simplified illustrations, and Looker Studio's layout and German labels may differ slightly. The same instructions are in <code>docs/looker-studio.md</code> in the <code>sanjayyaluguli-lang/Trial-</code> repository. Your progress is saved in this browser only.</footer>
+</main>
+</div>
+</div>
+
+<script type="application/json" id="feed-data">{"us_std": "=ARRAYFORMULA(LET(\n  engMail, 2, engName, 3,\n  roster, IFERROR(FILTER(Candidate_Roster!A2:G, Candidate_Roster!A2:A \u003c> \"\")),\n  eng,    IFERROR(SORT(FILTER('Algorithm Engine'!A2:AT, 'Algorithm Engine'!A2:A \u003c> \"\"), 1, FALSE)),\n  rKey,   IFERROR(LOWER(TRIM(IF(CHOOSECOLS(roster, 2) \u003c> \"\", CHOOSECOLS(roster, 2), CHOOSECOLS(roster, 1)))), \"\"),\n  eKey,   IFERROR(LOWER(TRIM(IF(CHOOSECOLS(eng, engMail) \u003c> \"\", CHOOSECOLS(eng, engMail), CHOOSECOLS(eng, engName)))), \"\"),\n  keys,   SORT(UNIQUE(FILTER(VSTACK(rKey, eKey), VSTACK(rKey, eKey) \u003c> \"\"))),\n  R, LAMBDA(c, ARRAYFORMULA(IFERROR(VLOOKUP(keys, HSTACK(rKey, roster), c + 1, FALSE), \"\"))),\n  E, LAMBDA(c, ARRAYFORMULA(IFERROR(VLOOKUP(keys, HSTACK(eKey, eng),    c + 1, FALSE), \"\"))),\n  submitted, E(1),\n  score,     E(42),\n  status, IF(submitted = \"\", \"Pending Self-Assessment\",\n          IF(R(7) = \"Complete\", \"Evaluated\", \"Pending Manager Review\")),\n  VSTACK(\n    {\"Email\",\"Candidate Name\",\"Discipline\",\"Role\",\"Hiring Manager\",\"Invited On\",\"Evaluation Status\",\n     \"Submitted On\",\"Match Score\",\"Critical Gaps\",\"Readiness\",\"Meets Threshold\"},\n    HSTACK(\n      IF(R(2) \u003c> \"\", R(2), E(engMail)),\n      IF(R(1) \u003c> \"\", R(1), E(engName)),\n      IF(R(3) \u003c> \"\", R(3), E(4)),\n      IF(E(5) \u003c> \"\", E(5), R(4)),\n      R(5),\n      IF(R(6) = \"\", \"\", TO_DATE(R(6))),\n      status,\n      IF(submitted = \"\", \"\", TO_DATE(submitted)),\n      IF(ISNUMBER(score), score, \"\"),\n      E(43), E(45), IF(E(46) = \"\", \"No\", E(46))))\n))", "us_nb": "=ARRAYFORMULA(LET(\n  engMail, 3, engName, 2,\n  roster, IFERROR(FILTER(Candidate_Roster!A2:G, Candidate_Roster!A2:A \u003c> \"\")),\n  eng,    IFERROR(SORT(FILTER('Algorithm Engine'!A2:AT, 'Algorithm Engine'!A2:A \u003c> \"\"), 1, FALSE)),\n  rKey,   IFERROR(LOWER(TRIM(IF(CHOOSECOLS(roster, 2) \u003c> \"\", CHOOSECOLS(roster, 2), CHOOSECOLS(roster, 1)))), \"\"),\n  eKey,   IFERROR(LOWER(TRIM(IF(CHOOSECOLS(eng, engMail) \u003c> \"\", CHOOSECOLS(eng, engMail), CHOOSECOLS(eng, engName)))), \"\"),\n  keys,   SORT(UNIQUE(FILTER(VSTACK(rKey, eKey), VSTACK(rKey, eKey) \u003c> \"\"))),\n  R, LAMBDA(c, ARRAYFORMULA(IFERROR(VLOOKUP(keys, HSTACK(rKey, roster), c + 1, FALSE), \"\"))),\n  E, LAMBDA(c, ARRAYFORMULA(IFERROR(VLOOKUP(keys, HSTACK(eKey, eng),    c + 1, FALSE), \"\"))),\n  submitted, E(1),\n  score,     E(42),\n  status, IF(submitted = \"\", \"Pending Self-Assessment\",\n          IF(R(7) = \"Complete\", \"Evaluated\", \"Pending Manager Review\")),\n  VSTACK(\n    {\"Email\",\"Candidate Name\",\"Discipline\",\"Role\",\"Hiring Manager\",\"Invited On\",\"Evaluation Status\",\n     \"Submitted On\",\"Match Score\",\"Critical Gaps\",\"Readiness\",\"Meets Threshold\"},\n    HSTACK(\n      IF(R(2) \u003c> \"\", R(2), E(engMail)),\n      IF(R(1) \u003c> \"\", R(1), E(engName)),\n      IF(R(3) \u003c> \"\", R(3), E(4)),\n      IF(E(5) \u003c> \"\", E(5), R(4)),\n      R(5),\n      IF(R(6) = \"\", \"\", TO_DATE(R(6))),\n      status,\n      IF(submitted = \"\", \"\", TO_DATE(submitted)),\n      IF(ISNUMBER(score), score, \"\"),\n      E(43), E(45), IF(E(46) = \"\", \"No\", E(46))))\n))", "eu_std": "=ARRAYFORMULA(LET(\n  engMail; 2; engName; 3;\n  roster; IFERROR(FILTER(Candidate_Roster!A2:G; Candidate_Roster!A2:A \u003c> \"\"));\n  eng;    IFERROR(SORT(FILTER('Algorithm Engine'!A2:AT; 'Algorithm Engine'!A2:A \u003c> \"\"); 1; FALSE));\n  rKey;   IFERROR(LOWER(TRIM(IF(CHOOSECOLS(roster; 2) \u003c> \"\"; CHOOSECOLS(roster; 2); CHOOSECOLS(roster; 1)))); \"\");\n  eKey;   IFERROR(LOWER(TRIM(IF(CHOOSECOLS(eng; engMail) \u003c> \"\"; CHOOSECOLS(eng; engMail); CHOOSECOLS(eng; engName)))); \"\");\n  keys;   SORT(UNIQUE(FILTER(VSTACK(rKey; eKey); VSTACK(rKey; eKey) \u003c> \"\")));\n  R; LAMBDA(c; ARRAYFORMULA(IFERROR(VLOOKUP(keys; HSTACK(rKey; roster); c + 1; FALSE); \"\")));\n  E; LAMBDA(c; ARRAYFORMULA(IFERROR(VLOOKUP(keys; HSTACK(eKey; eng);    c + 1; FALSE); \"\")));\n  submitted; E(1);\n  score;     E(42);\n  status; IF(submitted = \"\"; \"Pending Self-Assessment\";\n          IF(R(7) = \"Complete\"; \"Evaluated\"; \"Pending Manager Review\"));\n  VSTACK(\n    {\"Email\"\\\"Candidate Name\"\\\"Discipline\"\\\"Role\"\\\"Hiring Manager\"\\\"Invited On\"\\\"Evaluation Status\"\\\n     \"Submitted On\"\\\"Match Score\"\\\"Critical Gaps\"\\\"Readiness\"\\\"Meets Threshold\"};\n    HSTACK(\n      IF(R(2) \u003c> \"\"; R(2); E(engMail));\n      IF(R(1) \u003c> \"\"; R(1); E(engName));\n      IF(R(3) \u003c> \"\"; R(3); E(4));\n      IF(E(5) \u003c> \"\"; E(5); R(4));\n      R(5);\n      IF(R(6) = \"\"; \"\"; TO_DATE(R(6)));\n      status;\n      IF(submitted = \"\"; \"\"; TO_DATE(submitted));\n      IF(ISNUMBER(score); score; \"\");\n      E(43); E(45); IF(E(46) = \"\"; \"No\"; E(46))))\n))", "eu_nb": "=ARRAYFORMULA(LET(\n  engMail; 3; engName; 2;\n  roster; IFERROR(FILTER(Candidate_Roster!A2:G; Candidate_Roster!A2:A \u003c> \"\"));\n  eng;    IFERROR(SORT(FILTER('Algorithm Engine'!A2:AT; 'Algorithm Engine'!A2:A \u003c> \"\"); 1; FALSE));\n  rKey;   IFERROR(LOWER(TRIM(IF(CHOOSECOLS(roster; 2) \u003c> \"\"; CHOOSECOLS(roster; 2); CHOOSECOLS(roster; 1)))); \"\");\n  eKey;   IFERROR(LOWER(TRIM(IF(CHOOSECOLS(eng; engMail) \u003c> \"\"; CHOOSECOLS(eng; engMail); CHOOSECOLS(eng; engName)))); \"\");\n  keys;   SORT(UNIQUE(FILTER(VSTACK(rKey; eKey); VSTACK(rKey; eKey) \u003c> \"\")));\n  R; LAMBDA(c; ARRAYFORMULA(IFERROR(VLOOKUP(keys; HSTACK(rKey; roster); c + 1; FALSE); \"\")));\n  E; LAMBDA(c; ARRAYFORMULA(IFERROR(VLOOKUP(keys; HSTACK(eKey; eng);    c + 1; FALSE); \"\")));\n  submitted; E(1);\n  score;     E(42);\n  status; IF(submitted = \"\"; \"Pending Self-Assessment\";\n          IF(R(7) = \"Complete\"; \"Evaluated\"; \"Pending Manager Review\"));\n  VSTACK(\n    {\"Email\"\\\"Candidate Name\"\\\"Discipline\"\\\"Role\"\\\"Hiring Manager\"\\\"Invited On\"\\\"Evaluation Status\"\\\n     \"Submitted On\"\\\"Match Score\"\\\"Critical Gaps\"\\\"Readiness\"\\\"Meets Threshold\"};\n    HSTACK(\n      IF(R(2) \u003c> \"\"; R(2); E(engMail));\n      IF(R(1) \u003c> \"\"; R(1); E(engName));\n      IF(R(3) \u003c> \"\"; R(3); E(4));\n      IF(E(5) \u003c> \"\"; E(5); R(4));\n      R(5);\n      IF(R(6) = \"\"; \"\"; TO_DATE(R(6)));\n      status;\n      IF(submitted = \"\"; \"\"; TO_DATE(submitted));\n      IF(ISNUMBER(score); score; \"\");\n      E(43); E(45); IF(E(46) = \"\"; \"No\"; E(46))))\n))"}</script>
+<script>
+(function(){
+  var KEY='cm-looker-done', state={};
+  try{state=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){state={};}
+  var boxes=[].slice.call(document.querySelectorAll('input[type=checkbox][data-s]'));
+  function render(){
+    var n=0;
+    boxes.forEach(function(b){
+      b.checked=!!state[b.dataset.s]; if(b.checked) n++;
+      var a=document.querySelector('nav.rail a[data-s="'+b.dataset.s+'"]');
+      if(a) a.classList.toggle('done',b.checked);
+    });
+    document.getElementById('proglabel').textContent=n+' of '+boxes.length+' steps done';
+    document.getElementById('progbar').style.width=(100*n/boxes.length)+'%';
+  }
+  boxes.forEach(function(b){
+    b.addEventListener('change',function(){
+      state[b.dataset.s]=b.checked;
+      try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+      render();
+    });
+  });
+  render();
+
+  var feed={}; try{feed=JSON.parse(document.getElementById('feed-data').textContent);}catch(e){}
+  var PKEY='cm-looker-prefs', prefs={loc:'us',lay:'std'};
+  try{var p=JSON.parse(localStorage.getItem(PKEY)||'null'); if(p) prefs=p;}catch(e){}
+  function apply(){
+    var k=prefs.loc+'_'+prefs.lay;
+    if(feed[k]) document.getElementById('t-feed').textContent=feed[k];
+    document.getElementById('feed-tag').textContent=(prefs.loc==='eu'?'EU ;':'US ,')+' · '+(prefs.lay==='nb'?'Name B':'Email B');
+    document.querySelectorAll('input[name=loc]').forEach(function(r){r.checked=(r.value===prefs.loc);});
+    document.querySelectorAll('input[name=lay]').forEach(function(r){r.checked=(r.value===prefs.lay);});
+  }
+  document.querySelectorAll('input[name=loc],input[name=lay]').forEach(function(r){
+    r.addEventListener('change',function(){
+      if(!r.checked) return;
+      prefs[r.name]=r.value;
+      try{localStorage.setItem(PKEY,JSON.stringify(prefs));}catch(e){}
+      apply();
+    });
+  });
+  apply();
+
+  document.querySelectorAll('button.copy').forEach(function(btn){
+    var label=btn.textContent;
+    btn.addEventListener('click',function(){
+      var el=document.getElementById(btn.dataset.copy);
+      var text=el.textContent;
+      function done(ok){
+        btn.textContent=ok?'Copied':'Selected: press Ctrl+C';
+        btn.classList.toggle('ok',ok);
+        setTimeout(function(){btn.textContent=label;btn.classList.remove('ok');},1800);
+      }
+      function fallback(){
+        var r=document.createRange(); r.selectNodeContents(el);
+        var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        done(false);
+      }
+      try{ navigator.clipboard.writeText(text).then(function(){done(true);},fallback); }catch(e){fallback();}
+    });
+  });
+})();
+</script>
+</body>
+</html>

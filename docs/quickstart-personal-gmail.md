@@ -43,6 +43,8 @@ Leave `Algorithm Engine` for Step 4. It needs the form's response tab to exist f
 
 1. In the spreadsheet: **Tools ▸ Create a new form**. This links the form automatically and
    creates the `Form Responses 1` tab.
+   - On a non-English account the tab gets a translated name, e.g. *Formularantworten 1*. Rename
+     it to `Form Responses 1` (the form keeps writing to it) so the formulas work unchanged.
 2. **Settings ▸ Responses:**
    - Collect email addresses: **Verified** (respondents sign in with Google)
    - Allow response editing: **Off**

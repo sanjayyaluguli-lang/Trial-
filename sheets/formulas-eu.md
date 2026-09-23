@@ -85,6 +85,11 @@ below row 11 on the Chief Engineer tab.
 | AU | Alert Status (written by the Apps Script) |
 
 **A1** — copy of the responses
+
+> Google names the responses tab in your account's language, e.g. *Formularantworten 1* (German).
+> Either rename that tab to `Form Responses 1` (the form keeps writing to it), or use its actual
+> name in this formula. The Apps Script finds the tab either way.
+
 ```
 =ARRAYFORMULA('Form Responses 1'!A1:N)
 ```

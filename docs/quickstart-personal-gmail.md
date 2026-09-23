@@ -129,7 +129,7 @@ Common causes:
 | `#N/A` filling every column after the first in a block (e.g. P–W) | An older version of the O1, X1, AG1 or AR1 formula. Copy those four formulas again from `sheets/formulas.md`. |
 | Engine columns O–AT stay empty for a response | The role cell (column E of the responses tab) is empty. Make the role question **Required** in the form. For a test row, type the role into E by hand, then run `testWithLastRow`. |
 | Alert shows the email as the name and vice versa | Your responses tab has Name in B and Email in C. In `Code.gs` set `EMAIL: 3, NAME: 2` in `CFG.COL`. |
-| Match Score is 100% for everyone who meets the first competency | An older AP1/AQ1 formula that only counted the first column. Copy AP1 and AQ1 again. |
+| Match Score is 100% (or too high) and most `REQ ·` cells in O–W are empty | The form's question titles have extra spaces, so they don't match the baseline. Copy O1 and X1 again; the current versions ignore the spaces. |
 | No execution listed at all | The trigger isn't installed, or the response was submitted before you installed it. Rerun `installTrigger`, then run `testWithLastRow`. |
 | `diagnose` says *Script is not bound to a spreadsheet* | The script was created from the Form editor. Create it from the spreadsheet instead (**Extensions ▸ Apps Script**). |
 

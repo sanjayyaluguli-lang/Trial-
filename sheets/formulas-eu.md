@@ -96,25 +96,24 @@ below row 11 on the Chief Engineer tab.
 
 ### A. Pull the baseline for the selected role
 The key is `Role|Competency`; competency names come from the question titles in F1:N1.
-Empty rows produce a key like `|Systems Thinking…` that isn't in Baseline_Master, so `IFERROR`
+`TRIM` removes stray spaces: Google Forms keeps a space typed at the end of a question title, and
+without `TRIM` that competency would silently drop out of the score. Empty rows produce a key like `|Systems Thinking…` that isn't in Baseline_Master, so `IFERROR`
 leaves them blank.
 
-> **Never put 9-column arrays inside `IF(E2:E = "", …)`.** Sheets evaluates an array `IF` cell by
-> cell over its condition. A one-column condition therefore uses only the *first* column of every
-> array in its branches: a block gets `#N/A` in its other 8 columns, and a score counts only the
-> first competency (showing 100% whenever that one is met). Do the 9-column maths first, then
-> apply the blank-row check to the one-column result, as AP1 and AQ1 do.
+> **Keep every block the full 9 columns wide.** Don't wrap the 9-column blocks in
+> `IF(E2:E = "", …)`. Sheets sizes an array `IF` result by its condition, so a one-column
+> condition gives a one-column result and `VSTACK` fills the other 8 columns with `#N/A`.
 
 **O1** — Required (O–W)
 ```
 =ARRAYFORMULA(VSTACK("REQ · " & F1:N1;
-  IFERROR(VLOOKUP(E2:E & "|" & F1:N1; Baseline_Master!A:F; 5; FALSE))))
+  IFERROR(VLOOKUP(TRIM(E2:E) & "|" & TRIM(F1:N1); Baseline_Master!A:F; 5; FALSE))))
 ```
 
 **X1** — Priority (X–AF)
 ```
 =ARRAYFORMULA(VSTACK("PRI · " & F1:N1;
-  IFERROR(VLOOKUP(E2:E & "|" & F1:N1; Baseline_Master!A:F; 4; FALSE))))
+  IFERROR(VLOOKUP(TRIM(E2:E) & "|" & TRIM(F1:N1); Baseline_Master!A:F; 4; FALSE))))
 ```
 
 ### B. Gap = self score − required score

@@ -91,17 +91,23 @@ below row 11 on the Chief Engineer tab.
 
 ### A. Pull the baseline for the selected role
 The key is `Role|Competency`; competency names come from the question titles in F1:N1.
+Empty rows produce a key like `|Systems Thinking…` that isn't in Baseline_Master, so `IFERROR`
+leaves them blank.
+
+> **Keep every block the full 9 columns wide.** Don't wrap these blocks in `IF(E2:E = "", …)`.
+> Sheets sizes an `IF` result by its condition, so a one-column condition gives a one-column
+> result, and `VSTACK` fills the other 8 columns with `#N/A`.
 
 **O1** — Required (O–W)
 ```
 =ARRAYFORMULA(VSTACK("REQ · " & F1:N1,
-  IF(E2:E = "", , IFERROR(VLOOKUP(E2:E & "|" & F1:N1, Baseline_Master!A:F, 5, FALSE)))))
+  IFERROR(VLOOKUP(E2:E & "|" & F1:N1, Baseline_Master!A:F, 5, FALSE))))
 ```
 
 **X1** — Priority (X–AF)
 ```
 =ARRAYFORMULA(VSTACK("PRI · " & F1:N1,
-  IF(E2:E = "", , IFERROR(VLOOKUP(E2:E & "|" & F1:N1, Baseline_Master!A:F, 4, FALSE)))))
+  IFERROR(VLOOKUP(E2:E & "|" & F1:N1, Baseline_Master!A:F, 4, FALSE))))
 ```
 
 ### B. Gap = self score − required score
@@ -110,7 +116,7 @@ Negative means below the requirement.
 **AG1**
 ```
 =ARRAYFORMULA(VSTACK("GAP · " & F1:N1,
-  IF((E2:E = "") + (O2:W = ""), , F2:N - O2:W)))
+  IF((O2:W = "") + (F2:N = ""), , F2:N - O2:W)))
 ```
 
 ### C. Weighted Match Score %
@@ -141,10 +147,11 @@ Negative means below the requirement.
 
 **AR1** — Critical gap detail
 ```
-=ARRAYFORMULA(VSTACK("Critical Gap Detail", IF(E2:E = "", ,
-  BYROW(IF((X2:AF = "Critical") * (AG2:AO < 0),
-           F1:N1 & " (self " & F2:N & " vs req " & O2:W & ")", ""),
-        LAMBDA(r, TEXTJOIN("; ", TRUE, r))))))
+=VSTACK("Critical Gap Detail",
+  MAP(E2:E, SEQUENCE(ROWS(E2:E)), LAMBDA(role, i,
+    IF(role = "", "", ARRAYFORMULA(TEXTJOIN("; ", TRUE,
+      IF((INDEX(X2:AF, i) = "Critical") * (INDEX(AG2:AO, i) < 0),
+         F1:N1 & " (self " & INDEX(F2:N, i) & " vs req " & INDEX(O2:W, i) & ")", "")))))))
 ```
 
 **AS1** — Readiness band

@@ -115,6 +115,7 @@ competencies loses 5 + 5 = 10 points, giving 91/101.
 | `Cannot read properties of null (reading 'getRange')` | A tab name is wrong. It must be `Algorithm Engine` / `Form Responses 1` exactly. |
 | AP shows blank or `BASELINE MISSING` | The role text doesn't match `Role_Map` column A, or a question title doesn't match the competency name. |
 | AU says `FAILED` | `EMAIL_FALLBACK_TO` is empty. |
+| `#N/A` filling every column after the first in a block (e.g. P–W) | An older version of the O1, X1, AG1 or AR1 formula. Copy those four formulas again from `sheets/formulas.md`. |
 | No execution listed at all | The trigger isn't installed. Rerun `installTrigger`. |
 
 To resend for the last row without submitting again: run **`testWithLastRow`**.

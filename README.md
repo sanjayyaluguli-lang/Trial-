@@ -20,6 +20,7 @@ A self-assessment and role-matching pipeline built entirely in Google Workspace:
 | [`apps-script/Code.gs`](apps-script/Code.gs) | Form-submit alert to a Google Chat webhook, with an optional Gmail fallback |
 | [`docs/looker-studio.md`](docs/looker-studio.md) | Dashboard data source, calculated fields and chart setup |
 | [`docs/quickstart-personal-gmail.md`](docs/quickstart-personal-gmail.md) | Step-by-step test on a personal Gmail account (email alerts instead of Chat) |
+| [`docs/visual-guide.html`](docs/visual-guide.html) | Illustrated version of the Gmail quick start with copy buttons (download and open in a browser) |
 
 ## Setup order
 

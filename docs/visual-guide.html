@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Competency Matcher Setup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#F4F6F3; --surface:#FFFFFF; --sunk:#EDF0EB; --ink:#1C2321; --ink-2:#4F5A56; --ink-3:#7A8580;
+  --line:#DCE1DB; --accent:#1F5FAD; --mark:#E0590F; --mark-soft:rgba(224,89,15,.14);
+  --ok:#1E7B45; --ok-soft:#E3F2E8; --warn:#9A5200; --warn-soft:#FBEFDD; --bad:#B3261E; --bad-soft:#FBE7E5;
+  --sheets:#188038; --forms:#6F42C1; --script:#1A73E8; --gmail:#C5221F; --drive:#E8A600; --looker:#4285F4;
+  --grid-head:#F1F3F1; --sel:#E6F0FC;
+  --font-d:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-b:"Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-m:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#111514; --surface:#1A201E; --sunk:#141917; --ink:#E5EBE8; --ink-2:#A6B1AC; --ink-3:#7E8984;
+    --line:#2D3633; --accent:#8AB8F2; --mark:#FF8C4D; --mark-soft:rgba(255,140,77,.16);
+    --ok:#62C98E; --ok-soft:#173325; --warn:#F0AA5A; --warn-soft:#352817; --bad:#F28B82; --bad-soft:#3A1D1B;
+    --sheets:#5BB974; --forms:#B39DDB; --script:#8AB4F8; --gmail:#F28B82; --drive:#FDD663; --looker:#8AB4F8;
+    --grid-head:#20272A; --sel:#1C2B3D;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#111514; --surface:#1A201E; --sunk:#141917; --ink:#E5EBE8; --ink-2:#A6B1AC; --ink-3:#7E8984;
+  --line:#2D3633; --accent:#8AB8F2; --mark:#FF8C4D; --mark-soft:rgba(255,140,77,.16);
+  --ok:#62C98E; --ok-soft:#173325; --warn:#F0AA5A; --warn-soft:#352817; --bad:#F28B82; --bad-soft:#3A1D1B;
+  --sheets:#5BB974; --forms:#B39DDB; --script:#8AB4F8; --gmail:#F28B82; --drive:#FDD663; --looker:#8AB4F8;
+  --grid-head:#20272A; --sel:#1C2B3D;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-b);font-size:16px;line-height:1.55;padding-inline:16px;padding-block:0 64px}
+a{color:var(--accent)}
+code,kbd,.mono{font-family:var(--font-m);font-size:.86em}
+code{background:var(--sunk);padding:.08em .35em;border-radius:4px}
+kbd{border:1px solid var(--line);border-bottom-width:2px;padding:0 .35em;border-radius:4px;background:var(--surface)}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(1.9rem,4.4vw,2.8rem);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(1.4rem,3vw,1.85rem);font-weight:700}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0}
+.wrap{max-width:1180px;margin:0 auto}
+
+/* header */
+header.top{padding-block:40px 28px;display:grid;gap:14px;max-width:760px}
+.eyebrow{font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+.lede{font-size:1.1rem;color:var(--ink-2);max-width:65ch}
+.facts{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--ink-2);font-size:.92rem}
+.facts b{color:var(--ink)}
+
+/* flow */
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin-block:8px 6px}
+.flow .node{flex:1 1 130px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 12px;display:grid;gap:2px;position:relative}
+.flow .node small{color:var(--ink-3);font-size:.8rem;line-height:1.3}
+.flow .node b{font-size:.95rem}
+.flow .node::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:2px;background:var(--c)}
+.flow .arr{align-self:center;color:var(--ink-3);font-family:var(--font-m)}
+@media (max-width:720px){.flow .arr{display:none}}
+
+.note{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:12px 14px;display:grid;gap:4px;font-size:.95rem}
+.note.warn{background:var(--warn-soft);border-color:transparent}
+.note.ok{background:var(--ok-soft);border-color:transparent}
+.note.bad{background:var(--bad-soft);border-color:transparent}
+.note b.t{font-weight:700}
+
+/* layout */
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px;align-items:start;margin-top:28px}
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);display:grid;gap:4px;font-size:.93rem}
+nav.rail .prog{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:10px}
+nav.rail .prog i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+nav.rail .proglabel{font-size:.8rem;color:var(--ink-3);margin-bottom:4px}
+nav.rail a{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:center;text-decoration:none;color:var(--ink-2);padding:6px 8px;border-radius:6px}
+nav.rail a:hover{background:var(--surface);color:var(--ink)}
+nav.rail a .n{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.72rem;font-weight:700;font-family:var(--font-m)}
+nav.rail a.done .n{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+nav.rail a.done{color:var(--ink-3)}
+@media (max-width:960px){
+  .layout{grid-template-columns:minmax(0,1fr);gap:20px}
+  nav.rail{position:static;display:flex;flex-wrap:wrap;gap:6px}
+  nav.rail .prog,nav.rail .proglabel{flex-basis:100%}
+  nav.rail a{grid-template-columns:auto auto;background:var(--surface);border:1px solid var(--line);padding:4px 10px 4px 6px}
+}
+
+/* steps */
+main{display:grid;gap:56px;min-width:0}
+section.step{display:grid;gap:18px;scroll-margin-top:20px;min-width:0}
+.step-head{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:baseline}
+.step-head .num{font-family:var(--font-d);font-weight:700;font-size:2.1rem;color:var(--ink-3);line-height:1}
+.step-head .meta{grid-column:2;display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--ink-3);font-size:.88rem}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;letter-spacing:.03em;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);background:var(--surface)}
+.tag::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--c)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);gap:24px;align-items:start}
+@media (max-width:860px){.two{grid-template-columns:minmax(0,1fr)}}
+ol.do{margin:0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:d}
+ol.do>li{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start}
+ol.do>li>.pin{margin-top:1px}
+ol.do li ul{margin:.3em 0 0;padding-left:1.1em;color:var(--ink-2)}
+.pin{width:22px;height:22px;border-radius:50%;background:var(--mark);color:#fff;font-weight:700;font-size:.74rem;display:inline-grid;place-items:center;font-family:var(--font-m);flex:none}
+.done-row{display:flex;align-items:center;gap:10px;padding-top:4px}
+.done-row label{display:inline-flex;gap:8px;align-items:center;cursor:pointer;font-weight:600;border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:8px}
+.done-row input{width:18px;height:18px;accent-color:var(--ok)}
+.done-row input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* mock window */
+figure.mock{margin:0;display:grid;gap:6px;min-width:0}
+figure.mock figcaption{font-size:.8rem;color:var(--ink-3)}
+.win{border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px -12px rgba(0,0,0,.12);font-size:13px;line-height:1.4}
+.win-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--sunk);color:var(--ink-2);font-size:12.5px;white-space:nowrap;overflow:hidden}
+.win-bar .ico{width:16px;height:16px;border-radius:3px;background:var(--c);flex:none}
+.win-bar .ttl{font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+.win-body{padding:12px;position:relative}
+.scroll{overflow-x:auto}
+.menubar{display:flex;gap:14px;padding:6px 12px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink-2);flex-wrap:wrap}
+.menubar span{padding:2px 6px;border-radius:4px}
+.menu{border:1px solid var(--line);border-radius:6px;background:var(--surface);box-shadow:0 6px 20px -8px rgba(0,0,0,.25);width:min(260px,100%);padding:4px 0;font-size:12.5px}
+.menu div{padding:6px 14px;color:var(--ink-2);display:flex;justify-content:space-between;gap:12px}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.hl{outline:2px solid var(--mark);outline-offset:1px;background:var(--mark-soft)!important;color:var(--ink)!important;border-radius:4px;position:relative}
+.pinned{display:inline-flex;align-items:center;gap:6px}
+.btn-mock{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:18px;padding:6px 14px;font-weight:600;background:var(--surface);color:var(--ink)}
+.btn-mock.primary{background:var(--script);border-color:var(--script);color:#fff}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.stack{display:grid;gap:10px}
+.muted{color:var(--ink-3)}
+
+/* sheet grid */
+table.grid{border-collapse:collapse;font-family:var(--font-m);font-size:11.5px;min-width:100%}
+table.grid th,table.grid td{border:1px solid var(--line);padding:4px 8px;white-space:nowrap;text-align:left}
+table.grid thead th{background:var(--grid-head);color:var(--ink-3);font-weight:400;text-align:center}
+table.grid td.rn{background:var(--grid-head);color:var(--ink-3);text-align:center;width:28px}
+table.grid td.h{font-weight:600;color:var(--ink)}
+table.grid td.sel{background:var(--sel);outline:2px solid var(--script);outline-offset:-2px}
+table.grid td.good{color:var(--ok);font-weight:600}
+table.grid td.hlc{background:var(--mark-soft);outline:2px solid var(--mark);outline-offset:-2px;color:var(--ink);font-weight:600}
+.fbar{display:flex;gap:8px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line);font-family:var(--font-m);font-size:11.5px;color:var(--ink-2);white-space:nowrap;overflow:hidden}
+.fbar .ref{border-right:1px solid var(--line);padding-right:8px;color:var(--ink)}
+.fbar .fx{color:var(--ink-3);font-style:italic}
+.tabs{display:flex;gap:2px;padding:6px 8px 0;border-top:1px solid var(--line);background:var(--sunk);overflow-x:auto;font-size:12px}
+.tabs span{padding:5px 10px;border-radius:6px 6px 0 0;color:var(--ink-2);white-space:nowrap}
+.tabs span.on{background:var(--surface);color:var(--sheets);font-weight:600;box-shadow:inset 0 -2px 0 var(--sheets)}
+.tabs span.new{outline:2px dashed var(--mark);outline-offset:-3px;color:var(--ink)}
+
+/* forms mock */
+.fcard{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:14px 16px;display:grid;gap:10px}
+.fcard.top{border-top:8px solid var(--forms)}
+.fcard .q{font-size:15px;font-weight:600;color:var(--ink)}
+.fcard .d{color:var(--ink-2);font-size:12.5px;white-space:pre-line}
+.scale{display:grid;grid-template-columns:auto repeat(4,1fr) auto;gap:6px;align-items:end;text-align:center;font-size:12px;color:var(--ink-2)}
+.scale .r{display:grid;gap:4px;justify-items:center}
+.radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--ink-3)}
+.radio.on{border-color:var(--forms);box-shadow:inset 0 0 0 3px var(--surface),inset 0 0 0 9px var(--forms)}
+.fsel{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:4px;padding:5px 10px;font-size:12.5px}
+.toggle{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+.toggle:last-child{border-bottom:0}
+.sw{width:34px;height:14px;border-radius:7px;background:var(--line);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:-3px;left:-2px;width:20px;height:20px;border-radius:50%;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.sw.on{background:color-mix(in srgb,var(--forms) 45%,transparent)}
+.sw.on::after{left:16px;background:var(--forms)}
+
+/* script mock */
+.ide{display:grid;grid-template-columns:44px minmax(0,1fr)}
+.ide .side{background:var(--sunk);border-right:1px solid var(--line);display:grid;align-content:start;gap:4px;padding:8px 4px;justify-items:center;font-size:10px;color:var(--ink-3)}
+.ide .side span{width:32px;height:28px;border-radius:6px;display:grid;place-items:center;font-size:14px}
+.ide .side span.on{background:var(--sel);color:var(--script)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12.5px}
+.toolbar .tb{padding:3px 8px;border-radius:4px;color:var(--ink-2);display:inline-flex;gap:4px;align-items:center}
+pre.code{margin:0;padding:10px 12px;font-family:var(--font-m);font-size:11.5px;line-height:1.6;color:var(--ink-2);overflow-x:auto;background:var(--surface)}
+pre.code .ln{color:var(--ink-3);user-select:none;display:inline-block;width:2.2em}
+pre.code .k{color:var(--forms)} pre.code .s{color:var(--sheets)} pre.code .c{color:var(--ink-3)}
+pre.code .hline{background:var(--mark-soft);box-shadow:inset 3px 0 0 var(--mark);display:block;margin-inline:-12px;padding-inline:12px}
+
+/* consent */
+.consent{max-width:380px;border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:10px;background:var(--surface)}
+.consent .gw{font-size:15px;font-weight:600}
+.consent .lnk{color:var(--accent);font-weight:600;font-size:12.5px}
+
+/* gmail */
+.mail-row{display:grid;grid-template-columns:auto 110px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px;white-space:nowrap}
+.mail-row .star{color:var(--ink-3)}
+.mail-row .snip{overflow:hidden;text-overflow:ellipsis;color:var(--ink-2)}
+.mail-row.unread{font-weight:700;background:var(--sel)}
+.mail-row.unread .snip b{color:var(--ink)}
+.mail-open{padding:14px 16px;display:grid;gap:8px;font-size:13px}
+.mail-open .subj{font-size:17px;font-family:var(--font-d);font-weight:600}
+.mail-open ul{margin:0;padding-left:1.2em}
+
+/* copy blocks */
+.cp{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden;min-width:0}
+.cp-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 8px 6px 12px;border-bottom:1px solid var(--line);background:var(--sunk);font-size:.85rem}
+.cp-head .where{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cell{font-family:var(--font-m);font-weight:600;font-size:.8rem;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--sheets)}
+.cp pre{margin:0;padding:10px 12px;font-family:var(--font-m);font-size:12px;line-height:1.55;overflow:auto;max-height:260px;color:var(--ink)}
+.cp.tall pre{max-height:360px}
+button.copy{font:inherit;font-size:.82rem;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+button.copy:hover{border-color:var(--accent);color:var(--accent)}
+button.copy:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.copy.ok{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.cp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px}
+
+details.more{border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+details.more summary{cursor:pointer;padding:10px 14px;font-weight:600}
+details.more summary:focus-visible{outline:2px solid var(--accent)}
+details.more>div{padding:0 14px 14px;display:grid;gap:12px}
+
+table.plain{border-collapse:collapse;width:100%;font-size:.93rem}
+table.plain th,table.plain td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.plain th{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.expect td:last-child{font-family:var(--font-m);font-size:.86rem}
+footer{margin-top:56px;color:var(--ink-3);font-size:.88rem;border-top:1px solid var(--line);padding-top:16px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Role Competency Matching System · personal Gmail test</div>
+  <h1>Set it up on your Gmail, one screen at a time</h1>
+  <p class="lede">Each step shows roughly what you'll see in Google, with orange markers on what to click. The markers match the numbers in the instructions. Everything you need to paste has a copy button.</p>
+  <div class="facts"><span><b>About 45 min</b> total</span><span><b>You need:</b> a Gmail account, and <code>Competencie_Baseline.xlsx</code></span><span><b>Cost:</b> free</span></div>
+  <div class="flow" aria-label="How the pieces connect">
+    <div class="node" style="--c:var(--forms)"><b>Google Form</b><small>Candidate rates themselves 1–4</small></div><span class="arr">→</span>
+    <div class="node" style="--c:var(--sheets)"><b>Form Responses 1</b><small>One row per submission</small></div><span class="arr">→</span>
+    <div class="node" style="--c:var(--sheets)"><b>Algorithm Engine</b><small>Gaps and weighted Match %</small></div><span class="arr">→</span>
+    <div class="node" style="--c:var(--script)"><b>Apps Script</b><small>Runs on each submission</small></div><span class="arr">→</span>
+    <div class="node" style="--c:var(--gmail)"><b>Gmail alert</b><small>Score and critical gaps</small></div>
+  </div>
+  <div class="note warn"><b class="t">Why email and not Google Chat?</b><span>Personal Google accounts can't create Chat webhooks; that's a Workspace-only feature. The script already sends an email when no webhook is set. You just add your address in Step 5.</span></div>
+</header>
+
+<div class="layout">
+<nav class="rail" aria-label="Steps">
+  <div class="proglabel" id="proglabel">0 of 7 steps done</div>
+  <div class="prog"><i id="progbar"></i></div>
+  <a href="#s1" data-s="s1"><span class="n">1</span>Baseline into Sheets</a>
+  <a href="#s2" data-s="s2"><span class="n">2</span>Setup tabs</a>
+  <a href="#s3" data-s="s3"><span class="n">3</span>Build the form</a>
+  <a href="#s4" data-s="s4"><span class="n">4</span>Algorithm Engine</a>
+  <a href="#s5" data-s="s5"><span class="n">5</span>Apps Script</a>
+  <a href="#s6" data-s="s6"><span class="n">6</span>Test it</a>
+  <a href="#s7" data-s="s7"><span class="n">7</span>Dashboard (optional)</a>
+  <a href="#fix" style="margin-top:6px"><span class="n">?</span>If something's off</a>
+</nav>
+
+<main>
+<!-- STEP 1 -->
+<section class="step" id="s1">
+  <div class="step-head"><span class="num">1</span><h2>Turn the baseline into a Google Sheet</h2>
+    <div class="meta"><span class="tag" style="--c:var(--drive)">Drive</span><span class="tag" style="--c:var(--sheets)">Sheets</span><span>5 min</span></div></div>
+  <div class="two">
+    <ol class="do">
+      <li><span class="pin">1</span><div>Open <a href="https://drive.google.com" target="_blank" rel="noopener">drive.google.com</a>, click <b>New</b>, then <b>File upload</b>. Pick <code>Competencie_Baseline.xlsx</code>.</div></li>
+      <li><span class="pin">2</span><div>Double-click the uploaded file. It opens with a green <b>.XLSX</b> badge next to the name, which means it's still an Excel file and scripts won't run.</div></li>
+      <li><span class="pin">3</span><div>Choose <b>File ▸ Save as Google Sheets</b>. A new tab opens with the real Google Sheet.</div></li>
+      <li><span class="pin">4</span><div>Click the title and rename it <b>Competencie Baseline</b>. Check that the role tabs are there at the bottom.</div></li>
+    </ol>
+    <figure class="mock">
+      <div class="win" style="--c:var(--sheets)">
+        <div class="win-bar"><span class="ico"></span><span class="ttl">Competencie_Baseline.xlsx</span><span class="tag" style="--c:var(--sheets);padding:0 6px">.XLSX</span><span class="pin" style="margin-left:auto">2</span></div>
+        <div class="menubar"><span class="hl pinned">File <span class="pin">3</span></span><span>Edit</span><span>View</span><span>Insert</span><span>Format</span><span>Data</span><span>Tools</span></div>
+        <div class="win-body stack">
+          <div class="menu">
+            <div>New</div><div>Open <span class="muted">Ctrl+O</span></div><div>Make a copy</div><hr>
+            <div class="hl">Save as Google Sheets</div>
+            <div>Share</div><div>Download</div>
+          </div>
+        </div>
+        <div class="tabs"><span>Matrix</span><span class="on">Matrix Ops Manager</span><span>Matrix Senior PM</span><span>Matrix Chief Engineer</span><span>Matrix Senior Principle TPM</span><span>Matrix Quality Lead</span></div>
+      </div>
+      <figcaption>Illustration of the Excel file opened in Sheets. The .XLSX badge disappears once it's saved as a Google Sheet.</figcaption>
+    </figure>
+  </div>
+  <div class="note"><b class="t">Test with Senior PM or Quality Lead first.</b><span>They're the only roles with a complete baseline. Chief Engineer and Senior Principal TPM show <code>BASELINE MISSING</code> until you fill in their Role Priority and Required Proficiency columns.</span></div>
+  <div class="done-row"><label><input type="checkbox" id="d-s1" data-s="s1"> Step 1 done</label></div>
+</section>
+
+<!-- STEP 2 -->
+<section class="step" id="s2">
+  <div class="step-head"><span class="num">2</span><h2>Add the three setup tabs</h2>
+    <div class="meta"><span class="tag" style="--c:var(--sheets)">Sheets</span><span>5 min</span></div></div>
+  <div class="two">
+    <ol class="do">
+      <li><span class="pin">1</span><div>Click <b>+</b> at the bottom left to add a tab. Double-click it and rename it <b>Role_Map</b>.</div></li>
+      <li><span class="pin">2</span><div>Click cell <b>A1</b>, press <b>Copy</b> on the Role_Map block below, then paste with <kbd>Ctrl</kbd>+<kbd>V</kbd> (<kbd>⌘</kbd>+<kbd>V</kbd> on Mac). It fills the cells for you.</div></li>
+      <li><span class="pin">3</span><div>Do the same for a tab named <b>Weights</b>.</div></li>
+      <li><span class="pin">4</span><div>Add a tab named <b>Baseline_Master</b>. Click <b>A1</b> and paste its formula. You should get about 46 rows.</div></li>
+    </ol>
+    <figure class="mock">
+      <div class="win" style="--c:var(--sheets)">
+        <div class="win-bar"><span class="ico"></span><span class="ttl">Competencie Baseline</span></div>
+        <div class="fbar"><span class="ref">A1</span><span>Role</span></div>
+        <div class="scroll"><table class="grid">
+          <thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead>
+          <tbody>
+            <tr><td class="rn">1</td><td class="h sel">Role</td><td class="h">Tab</td><td class="h">Threshold</td></tr>
+            <tr><td class="rn">2</td><td>Operations Manager</td><td>Matrix Ops Manager</td><td>80%</td></tr>
+            <tr><td class="rn">3</td><td>Senior PM</td><td>Matrix Senior PM</td><td>80%</td></tr>
+            <tr><td class="rn">4</td><td>Chief Engineer</td><td>Matrix Chief Engineer</td><td>80%</td></tr>
+            <tr><td class="rn">5</td><td>Senior Principal TPM</td><td>Matrix Senior Principle TPM</td><td>80%</td></tr>
+            <tr><td class="rn">6</td><td>Quality Lead</td><td>Matrix Quality Lead</td><td>80%</td></tr>
+          </tbody></table></div>
+        <div class="tabs"><span class="pinned" style="font-weight:700">+ <span class="pin">1</span></span><span>Matrix Quality Lead</span><span class="on new">Role_Map</span><span class="new">Weights</span><span class="new">Baseline_Master</span></div>
+      </div>
+      <figcaption>Illustration of Role_Map after pasting. The dashed tabs are the new ones you add.</figcaption>
+    </figure>
+  </div>
+  <div class="cp-grid">
+    <div class="cp"><div class="cp-head"><span class="where"><b>Role_Map</b> paste at <span class="cell">A1</span></span><button class="copy" data-copy="t-rolemap">Copy</button></div><pre id="t-rolemap">Role	Tab	Threshold
+Operations Manager	Matrix Ops Manager	80%
+Senior PM	Matrix Senior PM	80%
+Chief Engineer	Matrix Chief Engineer	80%
+Senior Principal TPM	Matrix Senior Principle TPM	80%
+Quality Lead	Matrix Quality Lead	80%</pre></div>
+    <div class="cp"><div class="cp-head"><span class="where"><b>Weights</b> paste at <span class="cell">A1</span></span><button class="copy" data-copy="t-weights">Copy</button></div><pre id="t-weights">Priority	Weight
+Critical	5
+High	3
+Medium	2
+Med	2
+Low	1</pre></div>
+  </div>
+  <div class="cp tall"><div class="cp-head"><span class="where"><b>Baseline_Master</b> paste at <span class="cell">A1</span></span><button class="copy" data-copy="f0">Copy</button></div><pre id="f0">=REDUCE(
+  {"Key","Role","Competency","Priority","Required","Weight"},
+  FILTER(Role_Map!A2:A, Role_Map!A2:A&lt;&gt;""),
+  LAMBDA(acc, role, LET(
+    tab,  VLOOKUP(role, Role_Map!A2:B, 2, FALSE),
+    comp, INDIRECT("'" &amp; tab &amp; "'!B3:B11"),
+    pri,  INDIRECT("'" &amp; tab &amp; "'!E3:E11"),
+    req,  INDIRECT("'" &amp; tab &amp; "'!F3:F11"),
+    VSTACK(acc, ARRAYFORMULA(HSTACK(
+      role &amp; "|" &amp; TRIM(comp),
+      IF(comp = "", , role),
+      TRIM(comp),
+      PROPER(TRIM(pri)),
+      IF(req = "", , IFERROR(VALUE(LEFT(TRIM(req), 1)))),
+      IFERROR(VLOOKUP(PROPER(TRIM(pri)), Weights!A2:B, 2, FALSE), 0)
+    )))
+  ))
+)</pre></div>
+  <div class="note ok"><b class="t">Check it worked</b><span>In Baseline_Master, the Senior PM rows should show Required values of <code>3, 4, 4, 3, 3, 3, 3, 3, 2</code>. The Chief Engineer and TPM rows have blank Priority and Required columns. That's expected.</span></div>
+  <div class="done-row"><label><input type="checkbox" id="d-s2" data-s="s2"> Step 2 done</label></div>
+</section>
+
+<!-- STEP 3 -->
+<section class="step" id="s3">
+  <div class="step-head"><span class="num">3</span><h2>Build the Google Form</h2>
+    <div class="meta"><span class="tag" style="--c:var(--forms)">Forms</span><span>10–15 min</span></div></div>
+  <div class="two">
+    <ol class="do">
+      <li><span class="pin">1</span><div>In the spreadsheet, choose <b>Tools ▸ Create a new form</b>. This links the form to the sheet and adds a <code>Form Responses 1</code> tab.</div></li>
+      <li><span class="pin">2</span><div>In the form, open <b>Settings ▸ Responses</b>. Set <b>Collect email addresses</b> to <b>Verified</b> and turn <b>Allow response editing</b> off.</div></li>
+      <li><span class="pin">3</span><div>Back on <b>Questions</b>, add these in order:
+        <ul>
+          <li><b>Full Name</b> (Short answer)</li>
+          <li><b>Discipline</b> (Dropdown: Engineering, Program &amp; Project Mgmt, Operations, Quality, Other)</li>
+          <li><b>Which role are you being assessed for?</b> (Multiple choice; use the 5 names from Role_Map column A exactly)</li>
+        </ul></div></li>
+      <li><span class="pin">4</span><div>Add the <b>9 rating questions</b> in the order below. For each one, set the type to <b>Linear scale</b> and the range to <b>1 to 4</b>. Label 1 <i>Skill missing</i> and 4 <i>Benchmark strength</i>, and turn <b>Required</b> on.</div></li>
+      <li><span class="pin">5</span><div>Each question's <b>title must be the exact competency name</b>. Put the explanation in the description. Use <b>Copy titles</b> below to avoid typos.</div></li>
+      <li><div class="muted" style="grid-column:2">For this first test you can skip the per-role introduction pages from the full design.</div></li>
+    </ol>
+    <div class="stack">
+      <figure class="mock">
+        <div class="win" style="--c:var(--forms)">
+          <div class="win-bar"><span class="ico"></span><span class="ttl">Competency Self-Assessment</span><span style="margin-left:auto" class="row"><span>Questions</span><span class="hl pinned">Settings <span class="pin">2</span></span></span></div>
+          <div class="win-body">
+            <div class="toggle"><span><b>Collect email addresses</b></span><span class="fsel hl">Verified ▾</span></div>
+            <div class="toggle"><span>Allow response editing</span><span class="sw"></span></div>
+            <div class="toggle"><span>Limit to 1 response</span><span class="sw"></span></div>
+          </div>
+        </div>
+        <figcaption>Form settings, Responses section (illustration).</figcaption>
+      </figure>
+      <figure class="mock">
+        <div class="win" style="--c:var(--forms)">
+          <div class="win-bar"><span class="ico"></span><span class="ttl">Question editor</span></div>
+          <div class="win-body stack" style="background:var(--sunk)">
+            <div class="fcard top">
+              <div class="row" style="justify-content:space-between"><span class="q hl pinned" style="padding:2px 6px">Decisive Judgment under Ambiguity <span class="pin">5</span></span><span class="fsel hl pinned">⋯ Linear scale ▾ <span class="pin">4</span></span></div>
+              <div class="d">Makes timely, high-quality decisions even when data is incomplete or changing rapidly.
+How consistently did you: take calculated risks with clear mitigation plans · prioritize critical-path items under tight deadlines · make the call with the facts available?</div>
+              <div class="row"><span class="fsel">1 ▾</span><span class="muted">to</span><span class="fsel">4 ▾</span></div>
+              <div class="scale"><span>Skill missing</span>
+                <span class="r">1<span class="radio"></span></span><span class="r">2<span class="radio"></span></span><span class="r">3<span class="radio"></span></span><span class="r">4<span class="radio"></span></span>
+                <span>Benchmark strength</span></div>
+              <div class="row" style="justify-content:flex-end;font-size:12px;color:var(--ink-2)">Required <span class="sw on"></span></div>
+            </div>
+          </div>
+        </div>
+        <figcaption>One rating question set up correctly (illustration).</figcaption>
+      </figure>
+    </div>
+  </div>
+  <div class="cp"><div class="cp-head"><span class="where"><b>The 9 question titles</b>, in order</span><button class="copy" data-copy="t-titles">Copy titles</button></div><pre id="t-titles">Systems Thinking &amp; Business Alignment
+Decisive Judgment under Ambiguity
+End-to-End Ownership
+Agile Planning &amp; Resource Management
+Influencing Without Authority
+Conflict Resolution &amp; Negotiation
+Cross-Functional Communication
+Continuous Learning &amp; Agility
+Domain Mastery &amp; Application</pre></div>
+  <div class="note ok"><b class="t">Check it worked</b><span>Open the <code>Form Responses 1</code> tab. Row 1 should read <code>Timestamp · Email Address · Full Name · Discipline · Which role… · Systems Thinking &amp; Business Alignment · … · Domain Mastery &amp; Application</code>, with the 9 titles in columns F to N.</span></div>
+  <div class="done-row"><label><input type="checkbox" id="d-s3" data-s="s3"> Step 3 done</label></div>
+</section>
+
+<!-- STEP 4 -->
+<section class="step" id="s4">
+  <div class="step-head"><span class="num">4</span><h2>Add the Algorithm Engine tab</h2>
+    <div class="meta"><span class="tag" style="--c:var(--sheets)">Sheets</span><span>5 min</span></div></div>
+  <div class="two">
+    <ol class="do">
+      <li><span class="pin">1</span><div>Add a tab named exactly <b>Algorithm Engine</b>.</div></li>
+      <li><span class="pin">2</span><div>Paste each formula below into its own cell in <b>row 1</b>: A1, O1, X1, AG1, AP1, AQ1, AR1, AS1 and AT1. Click a cell, press <b>Copy</b>, then paste.</div></li>
+      <li><span class="pin">3</span><div>Type <code>Alert Status</code> in <b>AU1</b>.</div></li>
+      <li><span class="pin">4</span><div>Click the <b>AP</b> column header, then <b>Format ▸ Number ▸ Percent</b>.</div></li>
+    </ol>
+    <figure class="mock">
+      <div class="win" style="--c:var(--sheets)">
+        <div class="win-bar"><span class="ico"></span><span class="ttl">Competencie Baseline</span></div>
+        <div class="fbar"><span class="ref">AP1</span><span class="fx">fx</span><span>=VSTACK("Match Score %", ARRAYFORMULA(…</span></div>
+        <div class="scroll"><table class="grid">
+          <thead><tr><th></th><th>A</th><th>C</th><th>E</th><th>F … N</th><th>O … W</th><th>AG … AO</th><th class="pinned">AP</th><th>AQ</th><th>AS</th><th>AT</th><th>AU</th></tr></thead>
+          <tbody>
+            <tr><td class="rn">1</td><td class="h">Timestamp</td><td class="h">Full Name</td><td class="h">Role</td><td class="h">self scores</td><td class="h">REQ · …</td><td class="h">GAP · …</td><td class="h hlc">Match Score %</td><td class="h">Critical Gaps</td><td class="h">Readiness</td><td class="h">Meets…</td><td class="h">Alert Status</td></tr>
+            <tr><td class="rn">2</td><td class="muted">empty until</td><td class="muted">the first</td><td class="muted">submission</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          </tbody></table></div>
+        <div class="tabs"><span>Baseline_Master</span><span>Form Responses 1</span><span class="on new">Algorithm Engine</span></div>
+      </div>
+      <figcaption>Illustration: the formulas fill in the headers. Row 2 stays empty until someone submits the form.</figcaption>
+    </figure>
+  </div>
+  <div class="cp-grid">
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">A1</span> copy of the responses</span><button class="copy" data-copy="f1">Copy</button></div><pre id="f1">=ARRAYFORMULA('Form Responses 1'!A1:N)</pre></div>
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">O1</span> required level</span><button class="copy" data-copy="f2">Copy</button></div><pre id="f2">=ARRAYFORMULA(VSTACK("REQ · " &amp; F1:N1,
+  IF(E2:E = "", , IFERROR(VLOOKUP(E2:E &amp; "|" &amp; F1:N1, Baseline_Master!A:F, 5, FALSE)))))</pre></div>
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">X1</span> role priority</span><button class="copy" data-copy="f3">Copy</button></div><pre id="f3">=ARRAYFORMULA(VSTACK("PRI · " &amp; F1:N1,
+  IF(E2:E = "", , IFERROR(VLOOKUP(E2:E &amp; "|" &amp; F1:N1, Baseline_Master!A:F, 4, FALSE)))))</pre></div>
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AG1</span> gap</span><button class="copy" data-copy="f4">Copy</button></div><pre id="f4">=ARRAYFORMULA(VSTACK("GAP · " &amp; F1:N1,
+  IF((E2:E = "") + (O2:W = ""), , F2:N - O2:W)))</pre></div>
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AP1</span> Match Score %</span><button class="copy" data-copy="f5">Copy</button></div><pre id="f5">=VSTACK("Match Score %", ARRAYFORMULA(IF(E2:E = "", , LET(
+  S, IFERROR(F2:N * 1, 0),
+  R, IFERROR(O2:W * 1, 0),
+  W, IFERROR(VLOOKUP(X2:AF, Weights!A:B, 2, FALSE), 0),
+  ones, SEQUENCE(9, 1, 1, 0),
+  earned,   MMULT(W * IF(S &lt; R, S, R), ones),
+  possible, MMULT(W * R, ones),
+  IF(possible = 0, "BASELINE MISSING", earned / possible)))))</pre></div>
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AQ1</span> critical gap count</span><button class="copy" data-copy="f6">Copy</button></div><pre id="f6">=ARRAYFORMULA(VSTACK("Critical Gaps",
+  IF(E2:E = "", , MMULT(IF((X2:AF = "Critical") * (AG2:AO &lt; 0), 1, 0), SEQUENCE(9, 1, 1, 0)))))</pre></div>
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AR1</span> critical gap detail</span><button class="copy" data-copy="f7">Copy</button></div><pre id="f7">=ARRAYFORMULA(VSTACK("Critical Gap Detail", IF(E2:E = "", ,
+  BYROW(IF((X2:AF = "Critical") * (AG2:AO &lt; 0),
+           F1:N1 &amp; " (self " &amp; F2:N &amp; " vs req " &amp; O2:W &amp; ")", ""),
+        LAMBDA(r, TEXTJOIN("; ", TRUE, r))))))</pre></div>
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AS1</span> readiness</span><button class="copy" data-copy="f8">Copy</button></div><pre id="f8">=ARRAYFORMULA(VSTACK("Readiness", IF(E2:E = "", ,
+  IF(ISTEXT(AP2:AP), "Baseline Missing",
+  IF((AP2:AP &gt;= 0.9) * (AQ2:AQ = 0), "Ready Now",
+  IF(AP2:AP &gt;= 0.75, "Ready 1-2 Yrs", "Development Needed"))))))</pre></div>
+    <div class="cp"><div class="cp-head"><span class="where"><span class="cell">AT1</span> meets threshold</span><button class="copy" data-copy="f9">Copy</button></div><pre id="f9">=ARRAYFORMULA(VSTACK("Meets Threshold", IF(E2:E = "", ,
+  IF(ISNUMBER(AP2:AP),
+     IF(AP2:AP &gt;= IFERROR(VLOOKUP(E2:E, Role_Map!A:C, 3, FALSE), 0.8), "Yes", "No"),
+     "No"))))</pre></div>
+  </div>
+  <div class="note warn"><b class="t">Never sort this tab or Form Responses 1.</b><span>Row 5 of the engine belongs to row 5 of the responses, and the script relies on that. If a cell shows <code>#REF!</code> with "would overwrite data", clear everything below row 1 in that column.</span></div>
+  <div class="done-row"><label><input type="checkbox" id="d-s4" data-s="s4"> Step 4 done</label></div>
+</section>
+
+<!-- STEP 5 -->
+<section class="step" id="s5">
+  <div class="step-head"><span class="num">5</span><h2>Add the Apps Script and turn on the trigger</h2>
+    <div class="meta"><span class="tag" style="--c:var(--script)">Apps Script</span><span>5 min</span></div></div>
+  <div class="two">
+    <ol class="do">
+      <li><span class="pin">1</span><div>In the spreadsheet choose <b>Extensions ▸ Apps Script</b>. The script editor opens in a new tab.</div></li>
+      <li><span class="pin">2</span><div>Select everything in <code>Code.gs</code> and delete it. Press <b>Copy script</b> below and paste.</div></li>
+      <li><span class="pin">3</span><div>Find the <code>EMAIL_FALLBACK_TO</code> line near the top and put your Gmail address between the quotes. Leave the webhook line as it is.</div></li>
+      <li><span class="pin">4</span><div>Click <b>Save</b> (the disk icon).</div></li>
+      <li><span class="pin">5</span><div>In the function dropdown next to <b>Run</b>, pick <b>installTrigger</b>, then click <b>Run</b>.</div></li>
+    </ol>
+    <figure class="mock">
+      <div class="win" style="--c:var(--script)">
+        <div class="win-bar"><span class="ico"></span><span class="ttl">Untitled project · Apps Script</span></div>
+        <div class="ide">
+          <div class="side"><span>ⓘ</span><span class="on">‹›</span><span>⏰</span><span>≡</span><span>⚙</span></div>
+          <div style="min-width:0">
+            <div class="toolbar"><span class="tb">↶ ↷</span><span class="tb hl pinned">💾 <span class="pin">4</span></span><span class="tb" style="font-weight:600;color:var(--script)">▶ Run</span><span class="tb">Debug</span><span class="fsel hl pinned">installTrigger ▾ <span class="pin">5</span></span><span class="tb">Execution log</span></div>
+            <pre class="code"><span class="ln">13</span><span class="k">const</span> CFG = {
+<span class="ln">15</span>  CHAT_WEBHOOK_URL: <span class="s">'https://chat.googleapis…'</span>,
+<span class="hline"><span class="ln">16</span>  EMAIL_FALLBACK_TO: <span class="s">'you@gmail.com'</span>,   <span class="c">// ← your address</span> <span class="pin">3</span></span><span class="ln">17</span>  RESPONSES_SHEET: <span class="s">'Form Responses 1'</span>,
+<span class="ln">18</span>  ENGINE_SHEET: <span class="s">'Algorithm Engine'</span>,
+<span class="ln">19</span>  …</pre>
+          </div>
+        </div>
+      </div>
+      <figcaption>Apps Script editor (illustration). The left icons are Overview, Editor, Triggers, Executions and Settings.</figcaption>
+    </figure>
+  </div>
+
+  <h3>Then approve access. Google warns you because it's your own unpublished script.</h3>
+  <div class="two">
+    <ol class="do">
+      <li><span class="pin">6</span><div>Click <b>Review permissions</b> and choose your Gmail account.</div></li>
+      <li><span class="pin">7</span><div>On <i>"Google hasn't verified this app"</i>, click <b>Advanced</b>, then <b>Go to Untitled project (unsafe)</b>. It's safe here because you wrote this script and it only runs in your account.</div></li>
+      <li><span class="pin">8</span><div>Click <b>Allow</b>. It asks to use your spreadsheets, send email as you, and connect to external services (used only for Chat later).</div></li>
+      <li><span class="pin">9</span><div>Click the <b>⏰ Triggers</b> icon on the left. You should see one row: <code>onFormSubmit</code> · From spreadsheet · On form submit.</div></li>
+    </ol>
+    <div class="stack">
+      <figure class="mock">
+        <div class="consent">
+          <div class="gw">Google hasn't verified this app</div>
+          <div class="muted" style="font-size:12.5px">The app is requesting access to sensitive info in your Google Account…</div>
+          <div class="row" style="justify-content:space-between"><span class="lnk hl pinned" style="padding:2px 6px">Advanced <span class="pin">7</span></span><span class="btn-mock primary">BACK TO SAFETY</span></div>
+          <div class="lnk" style="text-decoration:underline">Go to Untitled project (unsafe)</div>
+        </div>
+        <figcaption>The warning screen (illustration). Use the small links, not the big button.</figcaption>
+      </figure>
+      <figure class="mock">
+        <div class="win" style="--c:var(--script)">
+          <div class="win-bar"><span class="ico"></span><span class="ttl">Triggers</span><span class="pin" style="margin-left:auto">9</span></div>
+          <div class="scroll"><table class="grid" style="font-family:var(--font-b);font-size:12px">
+            <thead><tr><th>Function</th><th>Deployment</th><th>Event</th><th>Error rate</th></tr></thead>
+            <tbody><tr><td class="hlc">onFormSubmit</td><td>Head</td><td>From spreadsheet · On form submit</td><td>0%</td></tr></tbody>
+          </table></div>
+        </div>
+      </figure>
+    </div>
+  </div>
+  <div class="cp tall"><div class="cp-head"><span class="where"><b>Code.gs</b>, the complete script</span><button class="copy" data-copy="t-code">Copy script</button></div><pre id="t-code">/**
+ * Role Competency Matching System – form-submit alert to Google Chat.
+ *
+ * Bound to the "Competencie Baseline" spreadsheet (which also receives the Form responses).
+ *
+ * Setup:
+ *   1. Extensions ▸ Apps Script ▸ paste this file.
+ *   2. Chat space ▸ space name ▸ Apps &amp; integrations ▸ Webhooks ▸ Add ▸ copy the URL.
+ *   3. Project Settings ▸ Script Properties ▸ add CHAT_WEBHOOK_URL (or edit the placeholder below).
+ *   4. Run installTrigger() once and approve permissions.
+ *   5. Run testWithLastRow() to verify.
+ */
+const CFG = {
+  // Placeholder – or set Script Property CHAT_WEBHOOK_URL (preferred; keeps the key out of code).
+  CHAT_WEBHOOK_URL: 'https://chat.googleapis.com/v1/spaces/SPACE_ID/messages?key=KEY&amp;token=TOKEN',
+  EMAIL_FALLBACK_TO: '',              // e.g. 'hiring.manager@company.com'; '' = no Gmail fallback
+  RESPONSES_SHEET: 'Form Responses 1',
+  ENGINE_SHEET: 'Algorithm Engine',
+  NUM_COMPETENCIES: 9,
+  COL: {                              // 1-based columns in Algorithm Engine
+    EMAIL: 2, NAME: 3, DISCIPLINE: 4, ROLE: 5,
+    SELF: 6, REQ: 15, PRI: 24, GAP: 33,
+    MATCH: 42, CRIT_COUNT: 43, READINESS: 45, MEETS: 46, ALERT: 47
+  },
+  WAIT_FOR_CALC_MS: 20000
+};
+const PRIORITY_RANK = { Critical: 4, High: 3, Medium: 2, Med: 2, Low: 1 };
+
+/** Installable trigger handler: Spreadsheet ▸ On form submit. */
+function onFormSubmit(e) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (e &amp;&amp; e.range &amp;&amp; e.range.getSheet().getName() !== CFG.RESPONSES_SHEET) return;
+  const row = (e &amp;&amp; e.range) ? e.range.getRow()
+                             : ss.getSheetByName(CFG.RESPONSES_SHEET).getLastRow();
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);                       // serialise simultaneous submissions
+  try {
+    const engine = ss.getSheetByName(CFG.ENGINE_SHEET);
+    const alertCell = engine.getRange(row, CFG.COL.ALERT);
+    if (String(alertCell.getValue()).indexOf('Sent') === 0) return;   // duplicate-trigger guard
+
+    const data = waitForEngineRow_(engine, row);
+    const names = engine.getRange(1, CFG.COL.SELF, 1, CFG.NUM_COMPETENCIES).getValues()[0];
+    const gaps = collectGaps_(data, names);
+    const link = ss.getUrl() + '#gid=' + engine.getSheetId() + '&amp;range=A' + row + ':AU' + row;
+
+    let ok = postToChat_(buildChatMessage_(data, gaps, link));
+    if (!ok &amp;&amp; CFG.EMAIL_FALLBACK_TO) ok = sendEmail_(data, gaps, link);
+
+    const stamp = Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd HH:mm');
+    alertCell.setValue((ok ? 'Sent ' : 'FAILED ') + stamp);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Waits until the ARRAYFORMULAs have recalculated the new row. */
+function waitForEngineRow_(engine, row) {
+  const deadline = Date.now() + CFG.WAIT_FOR_CALC_MS;
+  let vals;
+  do {
+    SpreadsheetApp.flush();
+    vals = engine.getRange(row, 1, 1, CFG.COL.ALERT).getValues()[0];
+    if (vals[CFG.COL.ROLE - 1] !== '' &amp;&amp; vals[CFG.COL.MATCH - 1] !== '') return vals;
+    Utilities.sleep(1500);
+  } while (Date.now() &lt; deadline);
+  return vals;
+}
+
+/** Every competency below requirement, Critical first, then largest shortfall. */
+function collectGaps_(d, names) {
+  const gaps = [];
+  for (let i = 0; i &lt; CFG.NUM_COMPETENCIES; i++) {
+    const self = d[CFG.COL.SELF - 1 + i], req = d[CFG.COL.REQ - 1 + i], pri = d[CFG.COL.PRI - 1 + i];
+    if (self === '' || req === '' || Number(self) &gt;= Number(req)) continue;
+    gaps.push({ name: names[i], self: self, req: req, pri: pri || 'n/a', short: req - self });
+  }
+  return gaps.sort((a, b) =&gt;
+    (PRIORITY_RANK[b.pri] || 0) - (PRIORITY_RANK[a.pri] || 0) || b.short - a.short);
+}
+
+function formatMatch_(m) {
+  return typeof m === 'number' ? (m * 100).toFixed(1) + '%' : (m || 'Not calculated');
+}
+
+function esc_(s) {
+  return String(s).replace(/&amp;/g, '&amp;amp;').replace(/&lt;/g, '&amp;lt;').replace(/&gt;/g, '&amp;gt;');
+}
+
+function buildChatMessage_(d, gaps, link) {
+  const C = CFG.COL;
+  const match = d[C.MATCH - 1];
+  const meets = d[C.MEETS - 1] === 'Yes';
+  const color = typeof match !== 'number' ? '#5F6368'
+              : meets ? '#188038' : match &gt;= 0.75 ? '#E37400' : '#D93025';
+
+  const critical = gaps.filter(g =&gt; g.pri === 'Critical');
+  const other = gaps.filter(g =&gt; g.pri !== 'Critical').slice(0, 5);
+  const line = g =&gt; '• &lt;b&gt;' + esc_(g.name) + '&lt;/b&gt;: self ' + g.self + ' vs req ' + g.req +
+                    ' (' + esc_(g.pri) + ')';
+
+  const name = esc_(d[C.NAME - 1]), role = esc_(d[C.ROLE - 1]);
+  return {
+    text: 'New self-assessment: ' + d[C.NAME - 1] + ' – ' + d[C.ROLE - 1] + ' – ' + formatMatch_(match),
+    cardsV2: [{
+      cardId: 'match-' + Date.now(),
+      card: {
+        header: { title: '🎯 New Candidate Self-Assessment', subtitle: role },
+        sections: [
+          { widgets: [
+            { decoratedText: { topLabel: 'Candidate', text: '&lt;b&gt;' + name + '&lt;/b&gt;',
+                               bottomLabel: esc_(d[C.EMAIL - 1]), startIcon: { knownIcon: 'PERSON' } } },
+            { decoratedText: { topLabel: 'Role · Discipline',
+                               text: role + ' · ' + esc_(d[C.DISCIPLINE - 1]),
+                               startIcon: { knownIcon: 'BOOKMARK' } } },
+            { decoratedText: { topLabel: 'Match Score',
+                               text: '&lt;b&gt;&lt;font color="' + color + '"&gt;' + formatMatch_(match) + '&lt;/font&gt;&lt;/b&gt;' +
+                                     (meets ? '  ✅ meets threshold' : '  ⚠️ below threshold'),
+                               bottomLabel: 'Readiness: ' + d[C.READINESS - 1],
+                               startIcon: { knownIcon: 'STAR' } } }
+          ]},
+          { header: '🚩 Critical gaps (' + critical.length + ')', widgets: [
+            { textParagraph: { text: critical.length
+                ? '&lt;font color="#D93025"&gt;' + critical.map(line).join('&lt;br&gt;') + '&lt;/font&gt;'
+                : 'None – all Critical competencies meet the requirement.' } }
+          ]},
+          { header: 'Other gaps', collapsible: other.length &gt; 0, uncollapsibleWidgetsCount: 0, widgets: [
+            { textParagraph: { text: other.length ? other.map(line).join('&lt;br&gt;') : 'None' } }
+          ]},
+          { widgets: [{ buttonList: { buttons: [
+            { text: 'Open in Algorithm Engine', onClick: { openLink: { url: link } } }
+          ]}}]}
+        ]
+      }
+    }]
+  };
+}
+
+function postToChat_(message) {
+  const url = PropertiesService.getScriptProperties().getProperty('CHAT_WEBHOOK_URL') || CFG.CHAT_WEBHOOK_URL;
+  if (!url || url.indexOf('SPACE_ID') !== -1) {
+    console.warn('Chat webhook URL not configured.');
+    return false;
+  }
+  const res = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json; charset=UTF-8',
+    payload: JSON.stringify(message),
+    muteHttpExceptions: true
+  });
+  const code = res.getResponseCode();
+  if (code &gt;= 200 &amp;&amp; code &lt; 300) return true;
+  console.error('Chat webhook failed: ' + code + ' ' + res.getContentText());
+  return false;
+}
+
+function sendEmail_(d, gaps, link) {
+  const C = CFG.COL;
+  const rows = gaps.map(g =&gt; '&lt;li&gt;&lt;b&gt;' + esc_(g.name) + '&lt;/b&gt; – self ' + g.self + ' vs req ' + g.req +
+                             ' (' + esc_(g.pri) + ')&lt;/li&gt;').join('');
+  MailApp.sendEmail({
+    to: CFG.EMAIL_FALLBACK_TO,
+    subject: 'Candidate match: ' + d[C.NAME - 1] + ' – ' + d[C.ROLE - 1] + ' – ' + formatMatch_(d[C.MATCH - 1]),
+    htmlBody: '&lt;p&gt;&lt;b&gt;' + esc_(d[C.NAME - 1]) + '&lt;/b&gt; (' + esc_(d[C.ROLE - 1]) + ')&lt;br&gt;Match Score: &lt;b&gt;' +
+              formatMatch_(d[C.MATCH - 1]) + '&lt;/b&gt; · ' + esc_(d[C.READINESS - 1]) + '&lt;/p&gt;' +
+              '&lt;p&gt;Gaps:&lt;/p&gt;&lt;ul&gt;' + (rows || '&lt;li&gt;None&lt;/li&gt;') + '&lt;/ul&gt;' +
+              '&lt;p&gt;&lt;a href="' + link + '"&gt;Open in Algorithm Engine&lt;/a&gt;&lt;/p&gt;'
+  });
+  return true;
+}
+
+/** Run once: installs the spreadsheet "On form submit" trigger (removes duplicates first). */
+function installTrigger() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  ScriptApp.getProjectTriggers()
+    .filter(t =&gt; t.getHandlerFunction() === 'onFormSubmit')
+    .forEach(t =&gt; ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('onFormSubmit').forSpreadsheet(ss).onFormSubmit().create();
+}
+
+/** Manual test: re-sends the alert for the most recent response. */
+function testWithLastRow() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const row = ss.getSheetByName(CFG.RESPONSES_SHEET).getLastRow();
+  ss.getSheetByName(CFG.ENGINE_SHEET).getRange(row, CFG.COL.ALERT).clearContent();
+  onFormSubmit(null);
+}</pre></div>
+  <div class="done-row"><label><input type="checkbox" id="d-s5" data-s="s5"> Step 5 done</label></div>
+</section>
+
+<!-- STEP 6 -->
+<section class="step" id="s6">
+  <div class="step-head"><span class="num">6</span><h2>Submit a test response</h2>
+    <div class="meta"><span class="tag" style="--c:var(--forms)">Forms</span><span class="tag" style="--c:var(--gmail)">Gmail</span><span>5 min</span></div></div>
+  <div class="two">
+    <ol class="do">
+      <li><span class="pin">1</span><div>In the form editor, click the <b>👁 Preview</b> icon at the top right.</div></li>
+      <li><span class="pin">2</span><div>Fill it in: Name <b>Test Candidate</b>, Discipline <b>Engineering</b>, Role <b>Senior PM</b>.</div></li>
+      <li><span class="pin">3</span><div>Give <b>every rating a 3</b>, then submit.</div></li>
+      <li><span class="pin">4</span><div>Wait about 30 seconds and check your Gmail inbox. The email comes from you, to you.</div></li>
+    </ol>
+    <figure class="mock">
+      <div class="win" style="--c:var(--forms)">
+        <div class="win-bar"><span class="ico"></span><span class="ttl">Preview · Competency Self-Assessment</span></div>
+        <div class="win-body stack" style="background:var(--sunk)">
+          <div class="fcard"><div class="q">Which role are you being assessed for?</div>
+            <div class="row" style="font-size:12.5px"><span class="radio"></span>Operations Manager</div>
+            <div class="row hl pinned" style="font-size:12.5px;padding:2px 4px"><span class="radio on"></span>Senior PM <span class="pin">2</span></div>
+            <div class="row" style="font-size:12.5px"><span class="radio"></span>Chief Engineer</div></div>
+          <div class="fcard"><div class="q">Decisive Judgment under Ambiguity</div>
+            <div class="scale"><span>Skill missing</span>
+              <span class="r">1<span class="radio"></span></span><span class="r">2<span class="radio"></span></span><span class="r hl pinned" style="padding:2px">3<span class="radio on"></span><span class="pin">3</span></span><span class="r">4<span class="radio"></span></span>
+              <span>Benchmark strength</span></div></div>
+        </div>
+      </div>
+      <figcaption>The test submission (illustration).</figcaption>
+    </figure>
+  </div>
+
+  <div class="two">
+    <div class="stack">
+      <h3>What you should see</h3>
+      <div class="tbl"><table class="plain expect">
+        <thead><tr><th>Where</th><th>Expected</th></tr></thead>
+        <tbody>
+          <tr><td>Algorithm Engine <b>AP2</b></td><td>90.1%</td></tr>
+          <tr><td><b>AQ2</b> critical gaps</td><td>2</td></tr>
+          <tr><td><b>AR2</b> detail</td><td>Decisive Judgment… (self 3 vs req 4); End-to-End Ownership (self 3 vs req 4)</td></tr>
+          <tr><td><b>AS2</b> readiness</td><td>Ready 1-2 Yrs</td></tr>
+          <tr><td><b>AT2</b> meets threshold</td><td>Yes</td></tr>
+          <tr><td><b>AU2</b> alert status</td><td>Sent 2026-…</td></tr>
+        </tbody></table></div>
+      <p class="muted" style="font-size:.93rem">Why 90.1%: the Senior PM weighted maximum is 101 points. Being one level short on two <b>Critical</b> competencies (weight 5 each) loses 10, giving 91 ÷ 101. Readiness isn't "Ready Now" because any Critical gap rules that out.</p>
+    </div>
+    <figure class="mock">
+      <div class="win" style="--c:var(--gmail)">
+        <div class="win-bar"><span class="ico"></span><span class="ttl">Inbox</span><span class="pin" style="margin-left:auto">4</span></div>
+        <div class="mail-row unread"><span class="star">☆</span><span>me</span><span class="snip"><b>Candidate match: Test Candidate – Senior PM – 90.1%</b> — Test Candidate (Senior PM) Match Score…</span><span>10:42</span></div>
+        <div class="mail-row"><span class="star">☆</span><span class="muted">Google</span><span class="snip">Security alert — You allowed Untitled project access…</span><span class="muted">10:31</span></div>
+        <div class="mail-open">
+          <div class="subj">Candidate match: Test Candidate – Senior PM – 90.1%</div>
+          <div><b>Test Candidate</b> (Senior PM)<br>Match Score: <b>90.1%</b> · Ready 1-2 Yrs</div>
+          <div>Gaps:</div>
+          <ul><li><b>Decisive Judgment under Ambiguity</b> – self 3 vs req 4 (Critical)</li><li><b>End-to-End Ownership</b> – self 3 vs req 4 (Critical)</li></ul>
+          <div><a href="#s6">Open in Algorithm Engine</a></div>
+        </div>
+      </div>
+      <figcaption>The alert email (illustration). The "Security alert" from Google is normal after Step 5.</figcaption>
+    </figure>
+  </div>
+  <div class="note"><b class="t">To send the alert again without resubmitting</b><span>In Apps Script, pick <b>testWithLastRow</b> in the function dropdown and click <b>Run</b>.</span></div>
+  <div class="done-row"><label><input type="checkbox" id="d-s6" data-s="s6"> Step 6 done: I got the email</label></div>
+</section>
+
+<!-- STEP 7 -->
+<section class="step" id="s7">
+  <div class="step-head"><span class="num">7</span><h2>Dashboard (optional)</h2>
+    <div class="meta"><span class="tag" style="--c:var(--looker)">Looker Studio</span><span>10 min</span></div></div>
+  <ol class="do">
+    <li><span class="pin">1</span><div>Add a <b>Candidate_Roster</b> tab and paste the sample below at A1. It includes one person who hasn't submitted, so the "missing" table has something to show.</div></li>
+    <li><span class="pin">2</span><div>Add a <b>Dashboard_Feed</b> tab and paste its formula at A1. Test Candidate appears, along with the two roster names.</div></li>
+    <li><span class="pin">3</span><div>Go to <a href="https://lookerstudio.google.com" target="_blank" rel="noopener">lookerstudio.google.com</a> and choose <b>Blank report ▸ Google Sheets ▸ Competencie Baseline ▸ Dashboard_Feed ▸ Add</b>.</div></li>
+    <li><span class="pin">4</span><div>Build the charts using <code>docs/looker-studio.md</code> in your GitHub repository: scorecard, role bar chart, missing-evaluations table, discipline donut and filters.</div></li>
+  </ol>
+  <div class="cp-grid">
+    <div class="cp"><div class="cp-head"><span class="where"><b>Candidate_Roster</b> sample, paste at <span class="cell">A1</span></span><button class="copy" data-copy="t-roster">Copy</button></div><pre id="t-roster">Candidate Name	Email	Discipline	Target Role	Hiring Manager	Invited On	Manager Review
+Alex Rivera	alex.rivera@example.com	Engineering	Quality Lead	You	2026-09-10	Pending
+Priya Nair	priya.nair@example.com	Operations	Operations Manager	You	2026-09-15	Pending</pre></div>
+    <div class="cp"><div class="cp-head"><span class="where"><b>Dashboard_Feed</b> paste at <span class="cell">A1</span></span><button class="copy" data-copy="f10">Copy</button></div><pre id="f10">=ARRAYFORMULA(LET(
+  roster, IFERROR(FILTER(Candidate_Roster!A2:G, Candidate_Roster!B2:B &lt;&gt; "")),
+  eng,    IFERROR(SORT(FILTER('Algorithm Engine'!A2:AT, 'Algorithm Engine'!B2:B &lt;&gt; ""), 1, FALSE)),
+  rKey,   IFERROR(LOWER(TRIM(CHOOSECOLS(roster, 2))), ""),
+  eKey,   IFERROR(LOWER(TRIM(CHOOSECOLS(eng, 2))), ""),
+  keys,   SORT(UNIQUE(FILTER(VSTACK(rKey, eKey), VSTACK(rKey, eKey) &lt;&gt; ""))),
+  R, LAMBDA(c, ARRAYFORMULA(IFERROR(VLOOKUP(keys, HSTACK(rKey, roster), c + 1, FALSE), ""))),
+  E, LAMBDA(c, ARRAYFORMULA(IFERROR(VLOOKUP(keys, HSTACK(eKey, eng),    c + 1, FALSE), ""))),
+  submitted, E(1),
+  score,     E(42),
+  status, IF(submitted = "", "Pending Self-Assessment",
+          IF(R(7) = "Complete", "Evaluated", "Pending Manager Review")),
+  VSTACK(
+    {"Email","Candidate Name","Discipline","Role","Hiring Manager","Invited On","Evaluation Status",
+     "Submitted On","Match Score","Critical Gaps","Readiness","Meets Threshold"},
+    HSTACK(keys,
+      IF(R(1) &lt;&gt; "", R(1), E(3)),
+      IF(R(3) &lt;&gt; "", R(3), E(4)),
+      IF(E(5) &lt;&gt; "", E(5), R(4)),
+      R(5), R(6), status, submitted,
+      IF(ISNUMBER(score), score, ""),
+      E(43), E(45), IF(E(46) = "", "No", E(46))))
+))</pre></div>
+  </div>
+  <div class="done-row"><label><input type="checkbox" id="d-s7" data-s="s7"> Step 7 done</label></div>
+</section>
+
+<!-- FIX -->
+<section class="step" id="fix">
+  <div class="step-head"><span class="num">?</span><h2>If something's off</h2>
+    <div class="meta"><span>Start with Apps Script ▸ ≡ Executions. Open the latest <code>onFormSubmit</code> run to see the error.</span></div></div>
+  <div class="tbl"><table class="plain">
+    <thead><tr><th>What you see</th><th>Likely cause</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>No email, and no run under Executions</td><td>The trigger isn't installed</td><td>Run <code>installTrigger</code> again and check ⏰ Triggers</td></tr>
+      <tr><td>Error: <code>Cannot read properties of null (reading 'getRange')</code></td><td>A tab name doesn't match</td><td>Tabs must be exactly <code>Algorithm Engine</code> and <code>Form Responses 1</code></td></tr>
+      <tr><td>AP2 blank or <code>BASELINE MISSING</code></td><td>The role doesn't match Role_Map, or a question title doesn't match a competency name</td><td>Compare Form Responses row 1 with the copied titles, and the role options with Role_Map column A</td></tr>
+      <tr><td>AU2 says <code>FAILED</code></td><td>No email address set</td><td>Fill in <code>EMAIL_FALLBACK_TO</code>, Save, then run <code>testWithLastRow</code></td></tr>
+      <tr><td><code>#REF!</code> "would overwrite data"</td><td>Something is typed below a row 1 formula</td><td>Clear that column from row 2 down</td></tr>
+      <tr><td><code>#NAME?</code> on REDUCE / LAMBDA / VSTACK</td><td>The file is still an .xlsx</td><td>Redo Step 1: File ▸ Save as Google Sheets</td></tr>
+    </tbody></table></div>
+</section>
+
+<footer>The same instructions are in the <code>sanjayyaluguli-lang/Trial-</code> repository under <code>docs/quickstart-personal-gmail.md</code>. Screens here are simplified illustrations, and Google's layout may differ slightly. Your progress is saved in this browser only.</footer>
+</main>
+</div>
+</div>
+
+<script>
+(function(){
+  var KEY='cm-guide-done';
+  var state={};
+  try{state=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){state={};}
+  var boxes=[].slice.call(document.querySelectorAll('input[type=checkbox][data-s]'));
+  function render(){
+    var n=0;
+    boxes.forEach(function(b){
+      b.checked=!!state[b.dataset.s]; if(b.checked) n++;
+      var a=document.querySelector('nav.rail a[data-s="'+b.dataset.s+'"]');
+      if(a) a.classList.toggle('done',b.checked);
+    });
+    document.getElementById('proglabel').textContent=n+' of '+boxes.length+' steps done';
+    document.getElementById('progbar').style.width=(100*n/boxes.length)+'%';
+  }
+  boxes.forEach(function(b){
+    b.addEventListener('change',function(){
+      state[b.dataset.s]=b.checked;
+      try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+      render();
+    });
+  });
+  render();
+
+  document.querySelectorAll('button.copy').forEach(function(btn){
+    var label=btn.textContent;
+    btn.addEventListener('click',function(){
+      var el=document.getElementById(btn.dataset.copy);
+      var text=el.textContent;
+      function done(ok){
+        btn.textContent=ok?'Copied':'Selected: press Ctrl+C';
+        btn.classList.toggle('ok',ok);
+        setTimeout(function(){btn.textContent=label;btn.classList.remove('ok');},1800);
+      }
+      function fallback(){
+        var r=document.createRange(); r.selectNodeContents(el);
+        var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        done(false);
+      }
+      try{
+        navigator.clipboard.writeText(text).then(function(){done(true);},fallback);
+      }catch(e){fallback();}
+    });
+  });
+})();
+</script>
+</body>
+</html>

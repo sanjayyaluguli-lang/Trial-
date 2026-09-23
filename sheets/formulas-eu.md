@@ -99,9 +99,11 @@ The key is `Role|Competency`; competency names come from the question titles in 
 Empty rows produce a key like `|Systems Thinking…` that isn't in Baseline_Master, so `IFERROR`
 leaves them blank.
 
-> **Keep every block the full 9 columns wide.** Don't wrap these blocks in `IF(E2:E = "", …)`.
-> Sheets sizes an `IF` result by its condition, so a one-column condition gives a one-column
-> result, and `VSTACK` fills the other 8 columns with `#N/A`.
+> **Never put 9-column arrays inside `IF(E2:E = "", …)`.** Sheets evaluates an array `IF` cell by
+> cell over its condition. A one-column condition therefore uses only the *first* column of every
+> array in its branches: a block gets `#N/A` in its other 8 columns, and a score counts only the
+> first competency (showing 100% whenever that one is met). Do the 9-column maths first, then
+> apply the blank-row check to the one-column result, as AP1 and AQ1 do.
 
 **O1** — Required (O–W)
 ```
@@ -134,20 +136,21 @@ Negative means below the requirement.
 
 **AP1** — Match Score % (format the column as Percent)
 ```
-=VSTACK("Match Score %"; ARRAYFORMULA(IF(E2:E = ""; ; LET(
+=VSTACK("Match Score %"; ARRAYFORMULA(LET(
   S; IFERROR(F2:N * 1; 0);
   R; IFERROR(O2:W * 1; 0);
   W; IFERROR(VLOOKUP(X2:AF; Weights!A:B; 2; FALSE); 0);
   ones; SEQUENCE(9; 1; 1; 0);
   earned;   MMULT(W * IF(S < R; S; R); ones);
   possible; MMULT(W * R; ones);
-  IF(possible = 0; "BASELINE MISSING"; earned / possible)))))
+  IF(E2:E = ""; ; IF(possible = 0; "BASELINE MISSING"; earned / possible)))))
 ```
 
 **AQ1** — Critical gap count
 ```
-=ARRAYFORMULA(VSTACK("Critical Gaps";
-  IF(E2:E = ""; ; MMULT(IF((X2:AF = "Critical") * (AG2:AO < 0); 1; 0); SEQUENCE(9; 1; 1; 0)))))
+=ARRAYFORMULA(VSTACK("Critical Gaps"; LET(
+  n; MMULT(IF((X2:AF = "Critical") * (AG2:AO < 0); 1; 0); SEQUENCE(9; 1; 1; 0));
+  IF(E2:E = ""; ; n))))
 ```
 
 **AR1** — Critical gap detail

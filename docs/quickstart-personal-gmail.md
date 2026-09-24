@@ -73,10 +73,9 @@ Leave `Algorithm Engine` for Step 4. It needs the form's response tab to exist f
 1. In the spreadsheet: **Extensions ▸ Apps Script**.
 2. Delete the sample code in `Code.gs` and paste the whole of
    [`apps-script/Code.gs`](../apps-script/Code.gs).
-3. Near the top, set your email address:
-   ```js
-   EMAIL_FALLBACK_TO: 'you@gmail.com',
-   ```
+3. Set your email address once: **⚙ Project Settings ▸ Script Properties ▸ Add script property**,
+   name `ALERT_EMAIL`, value `you@gmail.com`. This survives pasting a newer `Code.gs` later.
+   (Setting `EMAIL_FALLBACK_TO` at the top of the script also works, but a new version resets it.)
    Leave `CHAT_WEBHOOK_URL` as the placeholder. With no webhook, the script sends the email instead.
 4. Click **💾 Save**.
 5. In the function dropdown pick **`installTrigger`** ▸ **Run**, then approve access:
@@ -125,10 +124,10 @@ Common causes:
 |---|---|
 | `Cannot read properties of null (reading 'getRange')` | A tab name is wrong. It must be `Algorithm Engine` / `Form Responses 1` exactly. |
 | AP shows blank or `BASELINE MISSING` | The role text doesn't match `Role_Map` column A, or a question title doesn't match the competency name. |
-| AU says `FAILED` | `EMAIL_FALLBACK_TO` is empty. |
+| AU says `FAILED` | No email set. Add the `ALERT_EMAIL` Script Property (or `EMAIL_FALLBACK_TO`). |
 | `#N/A` filling every column after the first in a block (e.g. P–W) | An older version of the O1, X1, AG1 or AR1 formula. Copy those four formulas again from `sheets/formulas.md`. |
 | Engine columns O–AT stay empty for a response | The role cell (column E of the responses tab) is empty. Make the role question **Required** in the form. For a test row, type the role into E by hand, then run `testWithLastRow`. |
-| Alert shows the email as the name and vice versa | Your responses tab has Name in B and Email in C. In `Code.gs` set `EMAIL: 3, NAME: 2` in `CFG.COL`. |
+| Alert shows the email as the name and vice versa | An older `Code.gs`. The current version detects the Name and Email columns itself; paste it again. |
 | Match Score is 100% (or too high) and most `REQ ·` cells in O–W are empty | The form's question titles have extra spaces, so they don't match the baseline. Copy O1 and X1 again; the current versions ignore the spaces. |
 | No execution listed at all | The trigger isn't installed, or the response was submitted before you installed it. Rerun `installTrigger`, then run `testWithLastRow`. |
 | `diagnose` says *Script is not bound to a spreadsheet* | The script was created from the Form editor. Create it from the spreadsheet instead (**Extensions ▸ Apps Script**). |

@@ -6,14 +6,14 @@ the chart. It reads the candidate's latest submission from `Algorithm Engine`.
 
 ## Recommended: let the script build it
 
-1. **Extensions ▸ Apps Script**, paste the current [`apps-script/Code.gs`](../apps-script/Code.gs),
-   keeping your own `EMAIL_FALLBACK_TO` and `EMAIL`/`NAME` column numbers. Click **Save**.
+1. **Extensions ▸ Apps Script**, paste the current [`apps-script/Code.gs`](../apps-script/Code.gs)
+   and click **Save**. The script finds the Name and Email columns by itself.
 2. Pick **`buildProfileTab`** in the function dropdown ▸ **Run**.
 3. The **Candidate Profile** tab opens with the latest candidate selected. Change **B1** to see
    someone else.
 
-Running it again rebuilds the tab from scratch. The script writes formulas in standard syntax,
-which works in every locale, including European ones.
+Running it again rebuilds the tab from scratch. The script checks whether your spreadsheet uses
+`,` or `;` between formula arguments and writes the formulas to match, so European locales work.
 
 ## Layout
 

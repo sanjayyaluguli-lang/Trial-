@@ -14,12 +14,13 @@
 const CFG = {
   // Placeholder – or set Script Property CHAT_WEBHOOK_URL (preferred; keeps the key out of code).
   CHAT_WEBHOOK_URL: 'https://chat.googleapis.com/v1/spaces/SPACE_ID/messages?key=KEY&token=TOKEN',
+  // Alert email. Better: set Script Property ALERT_EMAIL, which survives pasting a new version.
   EMAIL_FALLBACK_TO: '',              // e.g. 'hiring.manager@company.com'; '' = no Gmail fallback
   RESPONSES_SHEET: 'Form Responses 1',
   ENGINE_SHEET: 'Algorithm Engine',
   NUM_COMPETENCIES: 9,
   COL: {                              // 1-based columns in Algorithm Engine
-    EMAIL: 2, NAME: 3, DISCIPLINE: 4, ROLE: 5,
+    EMAIL: 2, NAME: 3, DISCIPLINE: 4, ROLE: 5,   // EMAIL/NAME are auto-detected from the headers
     SELF: 6, REQ: 15, PRI: 24, GAP: 33,
     MATCH: 42, CRIT_COUNT: 43, READINESS: 45, MEETS: 46, ALERT: 47
   },
@@ -27,6 +28,32 @@ const CFG = {
 };
 const PRIORITY_RANK = { Critical: 4, High: 3, Medium: 2, Med: 2, Low: 1 };
 const PROFILE_SHEET = 'Candidate Profile';
+
+/** Alert email: Script Property ALERT_EMAIL, else EMAIL_FALLBACK_TO. */
+function alertEmail_() {
+  return PropertiesService.getScriptProperties().getProperty('ALERT_EMAIL') || CFG.EMAIL_FALLBACK_TO;
+}
+
+/** Detects which of engine columns B and C holds Email and which holds Name, from the headers. */
+function detectColumns_(engine) {
+  const hdr = engine.getRange(1, 2, 1, 2).getDisplayValues()[0];
+  const mail = h => /mail/i.test(h);
+  if (mail(hdr[1]) && !mail(hdr[0])) { CFG.COL.EMAIL = 3; CFG.COL.NAME = 2; }
+  else if (mail(hdr[0]) && !mail(hdr[1])) { CFG.COL.EMAIL = 2; CFG.COL.NAME = 3; }
+}
+
+/**
+ * setFormula() follows the spreadsheet's locale: German, French, Dutch… sheets need ';' between
+ * arguments. Probes the sheet once and returns a function that adapts a ','-style formula.
+ */
+function formulaLocalizer_(sheet) {
+  const probe = sheet.getRange(sheet.getMaxRows(), sheet.getMaxColumns());
+  probe.setFormula('=SUM(1,2)');
+  SpreadsheetApp.flush();
+  const commaWorks = probe.getValue() === 3;
+  probe.clear();
+  return f => commaWorks ? f : f.replace(/"[^"]*"|,/g, m => m === ',' ? ';' : m);
+}
 
 /** Installable trigger handler: Spreadsheet ▸ On form submit. */
 function onFormSubmit(e) {
@@ -44,6 +71,7 @@ function onFormSubmit(e) {
   lock.waitLock(30000);                       // serialise simultaneous submissions
   const engine = ss.getSheetByName(CFG.ENGINE_SHEET);
   if (!engine) throw new Error('Tab "' + CFG.ENGINE_SHEET + '" not found.');
+  detectColumns_(engine);
   const alertCell = engine.getRange(row, CFG.COL.ALERT);
   const stamp = () => Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd HH:mm');
   try {
@@ -55,9 +83,9 @@ function onFormSubmit(e) {
     const link = ss.getUrl() + '#gid=' + engine.getSheetId() + '&range=A' + row + ':AU' + row;
 
     let ok = postToChat_(buildChatMessage_(data, gaps, link));
-    if (!ok && CFG.EMAIL_FALLBACK_TO) ok = sendEmail_(data, gaps, link);
-    if (!ok && !CFG.EMAIL_FALLBACK_TO && !getWebhookUrl_()) {
-      throw new Error('No alert destination: set EMAIL_FALLBACK_TO or the CHAT_WEBHOOK_URL Script Property.');
+    if (!ok && alertEmail_()) ok = sendEmail_(data, gaps, link);
+    if (!ok && !alertEmail_() && !getWebhookUrl_()) {
+      throw new Error('No alert destination: set the ALERT_EMAIL or CHAT_WEBHOOK_URL Script Property.');
     }
     alertCell.setValue((ok ? 'Sent ' : 'FAILED ') + stamp());
   } catch (err) {
@@ -188,14 +216,14 @@ function sendEmail_(d, gaps, link) {
   const rows = gaps.map(g => '<li><b>' + esc_(g.name) + '</b> – self ' + g.self + ' vs req ' + g.req +
                              ' (' + esc_(g.pri) + ')</li>').join('');
   MailApp.sendEmail({
-    to: CFG.EMAIL_FALLBACK_TO,
+    to: alertEmail_(),
     subject: 'Candidate match: ' + d[C.NAME - 1] + ' – ' + d[C.ROLE - 1] + ' – ' + formatMatch_(d[C.MATCH - 1]),
     htmlBody: '<p><b>' + esc_(d[C.NAME - 1]) + '</b> (' + esc_(d[C.ROLE - 1]) + ')<br>Match Score: <b>' +
               formatMatch_(d[C.MATCH - 1]) + '</b> · ' + esc_(d[C.READINESS - 1]) + '</p>' +
               '<p>Gaps:</p><ul>' + (rows || '<li>None</li>') + '</ul>' +
               '<p><a href="' + link + '">Open in Algorithm Engine</a></p>'
   });
-  console.log('Email sent to ' + CFG.EMAIL_FALLBACK_TO);
+  console.log('Email sent to ' + alertEmail_());
   return true;
 }
 
@@ -217,6 +245,7 @@ function buildProfileTab() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const engine = ss.getSheetByName(CFG.ENGINE_SHEET);
   if (!engine) throw new Error('Tab "' + CFG.ENGINE_SHEET + '" not found.');
+  detectColumns_(engine);
   const C = CFG.COL, N = CFG.NUM_COMPETENCIES;
   const letter = n => engine.getRange(1, n).getA1Notation().replace(/\d+/g, '');
   const E = "'" + CFG.ENGINE_SHEET + "'!";
@@ -232,6 +261,7 @@ function buildProfileTab() {
   } else {
     sh = ss.insertSheet(PROFILE_SHEET);
   }
+  const F = formulaLocalizer_(sh);
 
   sh.getRange('A1:A6').setValues([['Candidate'], ['Engine row'], ['Role'], ['Match Score'],
                                   ['Readiness'], ['Critical gaps']]).setFontWeight('bold');
@@ -243,20 +273,20 @@ function buildProfileTab() {
   if (lastRow >= 2) sh.getRange('B1').setValue(engine.getRange(lastRow, C.NAME).getValue());
 
   // Latest submission for the chosen name (#N/A until a name is picked).
-  sh.getRange('B2').setFormula('=MAX(FILTER(ROW(' + names + '), ' + names + ' = B1))');
-  sh.getRange('B3').setFormula('=IFERROR(INDEX(' + one(C.ROLE) + ', B2))');
-  sh.getRange('B4').setFormula('=IFERROR(INDEX(' + one(C.MATCH) + ', B2))').setNumberFormat('0.0%');
-  sh.getRange('B5').setFormula('=IFERROR(INDEX(' + one(C.READINESS) + ', B2))');
-  sh.getRange('B6').setFormula('=IFERROR(INDEX(' + one(C.CRIT_COUNT) + ', B2))');
+  sh.getRange('B2').setFormula(F('=MAX(FILTER(ROW(' + names + '), ' + names + ' = B1))'));
+  sh.getRange('B3').setFormula(F('=IFERROR(INDEX(' + one(C.ROLE) + ', B2))'));
+  sh.getRange('B4').setFormula(F('=IFERROR(INDEX(' + one(C.MATCH) + ', B2))')).setNumberFormat('0.0%');
+  sh.getRange('B5').setFormula(F('=IFERROR(INDEX(' + one(C.READINESS) + ', B2))'));
+  sh.getRange('B6').setFormula(F('=IFERROR(INDEX(' + one(C.CRIT_COUNT) + ', B2))'));
 
   sh.getRange('A8:E8').setValues([['Competency', 'Role requirement', 'Candidate', 'Priority', 'Gap']])
     .setFontWeight('bold').setBackground('#E9EFEC');
-  sh.getRange('A9').setFormula('=ARRAYFORMULA(TRIM(TRANSPOSE(' + E + letter(C.SELF) + '1:' +
-                               letter(C.SELF + N - 1) + '1)))');
-  sh.getRange('B9').setFormula('=IFERROR(TRANSPOSE(INDEX(' + block(C.REQ) + ', $B$2)))');
-  sh.getRange('C9').setFormula('=IFERROR(TRANSPOSE(INDEX(' + block(C.SELF) + ', $B$2)))');
-  sh.getRange('D9').setFormula('=IFERROR(TRANSPOSE(INDEX(' + block(C.PRI) + ', $B$2)))');
-  sh.getRange('E9').setFormula('=IFERROR(TRANSPOSE(INDEX(' + block(C.GAP) + ', $B$2)))');
+  sh.getRange('A9').setFormula(F('=ARRAYFORMULA(TRIM(TRANSPOSE(' + E + letter(C.SELF) + '1:' +
+                               letter(C.SELF + N - 1) + '1)))'));
+  sh.getRange('B9').setFormula(F('=IFERROR(TRANSPOSE(INDEX(' + block(C.REQ) + ', $B$2)))'));
+  sh.getRange('C9').setFormula(F('=IFERROR(TRANSPOSE(INDEX(' + block(C.SELF) + ', $B$2)))'));
+  sh.getRange('D9').setFormula(F('=IFERROR(TRANSPOSE(INDEX(' + block(C.PRI) + ', $B$2)))'));
+  sh.getRange('E9').setFormula(F('=IFERROR(TRANSPOSE(INDEX(' + block(C.GAP) + ', $B$2)))'));
   sh.setColumnWidth(1, 300);
   sh.setColumnWidths(2, 4, 140);
 
@@ -305,6 +335,7 @@ function diagnose() {
              responses.getName() + '\'!A1:N');
   }
   const engine = ss.getSheetByName(CFG.ENGINE_SHEET);
+  if (engine) detectColumns_(engine);
   check(!!engine, 'Tab "' + CFG.ENGINE_SHEET + '" ' + (engine ? 'exists' : 'is missing'));
 
   const triggers = ScriptApp.getProjectTriggers().filter(t =>
@@ -313,9 +344,9 @@ function diagnose() {
         (triggers.length === 0 ? '. Run installTrigger' : triggers.length > 1 ? '. Run installTrigger to reset' : ''));
 
   const webhook = getWebhookUrl_();
-  check(!!webhook || !!CFG.EMAIL_FALLBACK_TO, 'Alert goes to: ' +
-        ([webhook ? 'Chat webhook' : '', CFG.EMAIL_FALLBACK_TO].filter(String).join(' + ') ||
-         'nowhere. Set EMAIL_FALLBACK_TO at the top of the script'));
+  check(!!webhook || !!alertEmail_(), 'Alert goes to: ' +
+        ([webhook ? 'Chat webhook' : '', alertEmail_()].filter(String).join(' + ') ||
+         'nowhere. Set Script Property ALERT_EMAIL (or EMAIL_FALLBACK_TO)'));
   const quota = MailApp.getRemainingDailyQuota();
   check(quota > 0, 'Emails left today: ' + quota);
 
@@ -336,10 +367,10 @@ function diagnose() {
     }
   }
 
-  if (CFG.EMAIL_FALLBACK_TO) {
-    MailApp.sendEmail(CFG.EMAIL_FALLBACK_TO, 'Competency matcher – test email',
+  if (alertEmail_()) {
+    MailApp.sendEmail(alertEmail_(), 'Competency matcher – test email',
                       'If you can read this, the script can email you.');
-    out.push('📧 Test email sent to ' + CFG.EMAIL_FALLBACK_TO);
+    out.push('📧 Test email sent to ' + alertEmail_());
   }
   console.log(out.join('\n'));
 }

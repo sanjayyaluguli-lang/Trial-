@@ -500,7 +500,7 @@ Domain Mastery &amp; Application</pre></div>
     <ol class="do">
       <li><span class="pin">1</span><div>In the spreadsheet choose <b>Extensions ▸ Apps Script</b>. The script editor opens in a new tab.</div></li>
       <li><span class="pin">2</span><div>Select everything in <code>Code.gs</code> and delete it. Press <b>Copy script</b> below and paste.</div></li>
-      <li><span class="pin">3</span><div>Find the <code>EMAIL_FALLBACK_TO</code> line near the top and put your Gmail address between the quotes. Leave the webhook line as it is.</div></li>
+      <li><span class="pin">3</span><div>Set your email once: <b>⚙ Project Settings ▸ Script Properties ▸ Add script property</b>, name <code>ALERT_EMAIL</code>, value your Gmail address. It survives pasting a newer script later. (Filling in <code>EMAIL_FALLBACK_TO</code> near the top also works, but a new version resets it.)</div></li>
       <li><span class="pin">4</span><div>Click <b>Save</b> (the disk icon).</div></li>
       <li><span class="pin">5</span><div>In the function dropdown next to <b>Run</b>, pick <b>installTrigger</b>, then click <b>Run</b>.</div></li>
     </ol>
@@ -568,12 +568,13 @@ Domain Mastery &amp; Application</pre></div>
 const CFG = {
   // Placeholder – or set Script Property CHAT_WEBHOOK_URL (preferred; keeps the key out of code).
   CHAT_WEBHOOK_URL: 'https://chat.googleapis.com/v1/spaces/SPACE_ID/messages?key=KEY&amp;token=TOKEN',
+  // Alert email. Better: set Script Property ALERT_EMAIL, which survives pasting a new version.
   EMAIL_FALLBACK_TO: '',              // e.g. 'hiring.manager@company.com'; '' = no Gmail fallback
   RESPONSES_SHEET: 'Form Responses 1',
   ENGINE_SHEET: 'Algorithm Engine',
   NUM_COMPETENCIES: 9,
   COL: {                              // 1-based columns in Algorithm Engine
-    EMAIL: 2, NAME: 3, DISCIPLINE: 4, ROLE: 5,
+    EMAIL: 2, NAME: 3, DISCIPLINE: 4, ROLE: 5,   // EMAIL/NAME are auto-detected from the headers
     SELF: 6, REQ: 15, PRI: 24, GAP: 33,
     MATCH: 42, CRIT_COUNT: 43, READINESS: 45, MEETS: 46, ALERT: 47
   },
@@ -581,6 +582,32 @@ const CFG = {
 };
 const PRIORITY_RANK = { Critical: 4, High: 3, Medium: 2, Med: 2, Low: 1 };
 const PROFILE_SHEET = 'Candidate Profile';
+
+/** Alert email: Script Property ALERT_EMAIL, else EMAIL_FALLBACK_TO. */
+function alertEmail_() {
+  return PropertiesService.getScriptProperties().getProperty('ALERT_EMAIL') || CFG.EMAIL_FALLBACK_TO;
+}
+
+/** Detects which of engine columns B and C holds Email and which holds Name, from the headers. */
+function detectColumns_(engine) {
+  const hdr = engine.getRange(1, 2, 1, 2).getDisplayValues()[0];
+  const mail = h =&gt; /mail/i.test(h);
+  if (mail(hdr[1]) &amp;&amp; !mail(hdr[0])) { CFG.COL.EMAIL = 3; CFG.COL.NAME = 2; }
+  else if (mail(hdr[0]) &amp;&amp; !mail(hdr[1])) { CFG.COL.EMAIL = 2; CFG.COL.NAME = 3; }
+}
+
+/**
+ * setFormula() follows the spreadsheet's locale: German, French, Dutch… sheets need ';' between
+ * arguments. Probes the sheet once and returns a function that adapts a ','-style formula.
+ */
+function formulaLocalizer_(sheet) {
+  const probe = sheet.getRange(sheet.getMaxRows(), sheet.getMaxColumns());
+  probe.setFormula('=SUM(1,2)');
+  SpreadsheetApp.flush();
+  const commaWorks = probe.getValue() === 3;
+  probe.clear();
+  return f =&gt; commaWorks ? f : f.replace(/"[^"]*"|,/g, m =&gt; m === ',' ? ';' : m);
+}
 
 /** Installable trigger handler: Spreadsheet ▸ On form submit. */
 function onFormSubmit(e) {
@@ -598,6 +625,7 @@ function onFormSubmit(e) {
   lock.waitLock(30000);                       // serialise simultaneous submissions
   const engine = ss.getSheetByName(CFG.ENGINE_SHEET);
   if (!engine) throw new Error('Tab "' + CFG.ENGINE_SHEET + '" not found.');
+  detectColumns_(engine);
   const alertCell = engine.getRange(row, CFG.COL.ALERT);
   const stamp = () =&gt; Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd HH:mm');
   try {
@@ -609,9 +637,9 @@ function onFormSubmit(e) {
     const link = ss.getUrl() + '#gid=' + engine.getSheetId() + '&amp;range=A' + row + ':AU' + row;
 
     let ok = postToChat_(buildChatMessage_(data, gaps, link));
-    if (!ok &amp;&amp; CFG.EMAIL_FALLBACK_TO) ok = sendEmail_(data, gaps, link);
-    if (!ok &amp;&amp; !CFG.EMAIL_FALLBACK_TO &amp;&amp; !getWebhookUrl_()) {
-      throw new Error('No alert destination: set EMAIL_FALLBACK_TO or the CHAT_WEBHOOK_URL Script Property.');
+    if (!ok &amp;&amp; alertEmail_()) ok = sendEmail_(data, gaps, link);
+    if (!ok &amp;&amp; !alertEmail_() &amp;&amp; !getWebhookUrl_()) {
+      throw new Error('No alert destination: set the ALERT_EMAIL or CHAT_WEBHOOK_URL Script Property.');
     }
     alertCell.setValue((ok ? 'Sent ' : 'FAILED ') + stamp());
   } catch (err) {
@@ -742,14 +770,14 @@ function sendEmail_(d, gaps, link) {
   const rows = gaps.map(g =&gt; '&lt;li&gt;&lt;b&gt;' + esc_(g.name) + '&lt;/b&gt; – self ' + g.self + ' vs req ' + g.req +
                              ' (' + esc_(g.pri) + ')&lt;/li&gt;').join('');
   MailApp.sendEmail({
-    to: CFG.EMAIL_FALLBACK_TO,
+    to: alertEmail_(),
     subject: 'Candidate match: ' + d[C.NAME - 1] + ' – ' + d[C.ROLE - 1] + ' – ' + formatMatch_(d[C.MATCH - 1]),
     htmlBody: '&lt;p&gt;&lt;b&gt;' + esc_(d[C.NAME - 1]) + '&lt;/b&gt; (' + esc_(d[C.ROLE - 1]) + ')&lt;br&gt;Match Score: &lt;b&gt;' +
               formatMatch_(d[C.MATCH - 1]) + '&lt;/b&gt; · ' + esc_(d[C.READINESS - 1]) + '&lt;/p&gt;' +
               '&lt;p&gt;Gaps:&lt;/p&gt;&lt;ul&gt;' + (rows || '&lt;li&gt;None&lt;/li&gt;') + '&lt;/ul&gt;' +
               '&lt;p&gt;&lt;a href="' + link + '"&gt;Open in Algorithm Engine&lt;/a&gt;&lt;/p&gt;'
   });
-  console.log('Email sent to ' + CFG.EMAIL_FALLBACK_TO);
+  console.log('Email sent to ' + alertEmail_());
   return true;
 }
 
@@ -771,6 +799,7 @@ function buildProfileTab() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const engine = ss.getSheetByName(CFG.ENGINE_SHEET);
   if (!engine) throw new Error('Tab "' + CFG.ENGINE_SHEET + '" not found.');
+  detectColumns_(engine);
   const C = CFG.COL, N = CFG.NUM_COMPETENCIES;
   const letter = n =&gt; engine.getRange(1, n).getA1Notation().replace(/\d+/g, '');
   const E = "'" + CFG.ENGINE_SHEET + "'!";
@@ -786,6 +815,7 @@ function buildProfileTab() {
   } else {
     sh = ss.insertSheet(PROFILE_SHEET);
   }
+  const F = formulaLocalizer_(sh);
 
   sh.getRange('A1:A6').setValues([['Candidate'], ['Engine row'], ['Role'], ['Match Score'],
                                   ['Readiness'], ['Critical gaps']]).setFontWeight('bold');
@@ -797,20 +827,20 @@ function buildProfileTab() {
   if (lastRow &gt;= 2) sh.getRange('B1').setValue(engine.getRange(lastRow, C.NAME).getValue());
 
   // Latest submission for the chosen name (#N/A until a name is picked).
-  sh.getRange('B2').setFormula('=MAX(FILTER(ROW(' + names + '), ' + names + ' = B1))');
-  sh.getRange('B3').setFormula('=IFERROR(INDEX(' + one(C.ROLE) + ', B2))');
-  sh.getRange('B4').setFormula('=IFERROR(INDEX(' + one(C.MATCH) + ', B2))').setNumberFormat('0.0%');
-  sh.getRange('B5').setFormula('=IFERROR(INDEX(' + one(C.READINESS) + ', B2))');
-  sh.getRange('B6').setFormula('=IFERROR(INDEX(' + one(C.CRIT_COUNT) + ', B2))');
+  sh.getRange('B2').setFormula(F('=MAX(FILTER(ROW(' + names + '), ' + names + ' = B1))'));
+  sh.getRange('B3').setFormula(F('=IFERROR(INDEX(' + one(C.ROLE) + ', B2))'));
+  sh.getRange('B4').setFormula(F('=IFERROR(INDEX(' + one(C.MATCH) + ', B2))')).setNumberFormat('0.0%');
+  sh.getRange('B5').setFormula(F('=IFERROR(INDEX(' + one(C.READINESS) + ', B2))'));
+  sh.getRange('B6').setFormula(F('=IFERROR(INDEX(' + one(C.CRIT_COUNT) + ', B2))'));
 
   sh.getRange('A8:E8').setValues([['Competency', 'Role requirement', 'Candidate', 'Priority', 'Gap']])
     .setFontWeight('bold').setBackground('#E9EFEC');
-  sh.getRange('A9').setFormula('=ARRAYFORMULA(TRIM(TRANSPOSE(' + E + letter(C.SELF) + '1:' +
-                               letter(C.SELF + N - 1) + '1)))');
-  sh.getRange('B9').setFormula('=IFERROR(TRANSPOSE(INDEX(' + block(C.REQ) + ', $B$2)))');
-  sh.getRange('C9').setFormula('=IFERROR(TRANSPOSE(INDEX(' + block(C.SELF) + ', $B$2)))');
-  sh.getRange('D9').setFormula('=IFERROR(TRANSPOSE(INDEX(' + block(C.PRI) + ', $B$2)))');
-  sh.getRange('E9').setFormula('=IFERROR(TRANSPOSE(INDEX(' + block(C.GAP) + ', $B$2)))');
+  sh.getRange('A9').setFormula(F('=ARRAYFORMULA(TRIM(TRANSPOSE(' + E + letter(C.SELF) + '1:' +
+                               letter(C.SELF + N - 1) + '1)))'));
+  sh.getRange('B9').setFormula(F('=IFERROR(TRANSPOSE(INDEX(' + block(C.REQ) + ', $B$2)))'));
+  sh.getRange('C9').setFormula(F('=IFERROR(TRANSPOSE(INDEX(' + block(C.SELF) + ', $B$2)))'));
+  sh.getRange('D9').setFormula(F('=IFERROR(TRANSPOSE(INDEX(' + block(C.PRI) + ', $B$2)))'));
+  sh.getRange('E9').setFormula(F('=IFERROR(TRANSPOSE(INDEX(' + block(C.GAP) + ', $B$2)))'));
   sh.setColumnWidth(1, 300);
   sh.setColumnWidths(2, 4, 140);
 
@@ -859,6 +889,7 @@ function diagnose() {
              responses.getName() + '\'!A1:N');
   }
   const engine = ss.getSheetByName(CFG.ENGINE_SHEET);
+  if (engine) detectColumns_(engine);
   check(!!engine, 'Tab "' + CFG.ENGINE_SHEET + '" ' + (engine ? 'exists' : 'is missing'));
 
   const triggers = ScriptApp.getProjectTriggers().filter(t =&gt;
@@ -867,9 +898,9 @@ function diagnose() {
         (triggers.length === 0 ? '. Run installTrigger' : triggers.length &gt; 1 ? '. Run installTrigger to reset' : ''));
 
   const webhook = getWebhookUrl_();
-  check(!!webhook || !!CFG.EMAIL_FALLBACK_TO, 'Alert goes to: ' +
-        ([webhook ? 'Chat webhook' : '', CFG.EMAIL_FALLBACK_TO].filter(String).join(' + ') ||
-         'nowhere. Set EMAIL_FALLBACK_TO at the top of the script'));
+  check(!!webhook || !!alertEmail_(), 'Alert goes to: ' +
+        ([webhook ? 'Chat webhook' : '', alertEmail_()].filter(String).join(' + ') ||
+         'nowhere. Set Script Property ALERT_EMAIL (or EMAIL_FALLBACK_TO)'));
   const quota = MailApp.getRemainingDailyQuota();
   check(quota &gt; 0, 'Emails left today: ' + quota);
 
@@ -890,10 +921,10 @@ function diagnose() {
     }
   }
 
-  if (CFG.EMAIL_FALLBACK_TO) {
-    MailApp.sendEmail(CFG.EMAIL_FALLBACK_TO, 'Competency matcher – test email',
+  if (alertEmail_()) {
+    MailApp.sendEmail(alertEmail_(), 'Competency matcher – test email',
                       'If you can read this, the script can email you.');
-    out.push('📧 Test email sent to ' + CFG.EMAIL_FALLBACK_TO);
+    out.push('📧 Test email sent to ' + alertEmail_());
   }
   console.log(out.join('\n'));
 }</pre></div>
@@ -1024,13 +1055,13 @@ Priya Nair	priya.nair@example.com	Operations	Operations Manager	You	2026-09-15	P
     <thead><tr><th>What you see</th><th>Likely cause</th><th>Fix</th></tr></thead>
     <tbody>
       <tr><td>Engine columns O–AT stay empty for a response</td><td>The role cell (column E of the responses tab) is empty</td><td>Make the role question <b>Required</b>. For a test row, type the role into E by hand, then run <code>testWithLastRow</code></td></tr>
-      <tr><td>The alert shows the email as the name and vice versa</td><td>Name is in column B and Email in C</td><td>In <code>Code.gs</code> set <code>EMAIL: 3, NAME: 2</code> in <code>CFG.COL</code></td></tr>
+      <tr><td>The alert shows the email as the name and vice versa</td><td>An older <code>Code.gs</code></td><td>Paste the current script. It detects the Name and Email columns itself</td></tr>
       <tr><td>Match Score is 100% (or too high) and most <code>REQ ·</code> cells in O–W are empty</td><td>The form's question titles have extra spaces, so they don't match the baseline</td><td>Copy O1 and X1 again from Step 4. The current versions ignore the spaces</td></tr>
       <tr><td>No email, and no run under Executions</td><td>The trigger isn't installed, or the response was submitted before you installed it</td><td>Run <code>installTrigger</code>, check ⏰ Triggers, then run <code>testWithLastRow</code></td></tr>
       <tr><td><code>diagnose</code> says "not bound to a spreadsheet"</td><td>The script was created from the Form editor</td><td>Create it from the spreadsheet instead: <b>Extensions ▸ Apps Script</b></td></tr>
       <tr><td>Error: <code>Cannot read properties of null (reading 'getRange')</code></td><td>A tab name doesn't match</td><td>Tabs must be exactly <code>Algorithm Engine</code> and <code>Form Responses 1</code></td></tr>
       <tr><td>AP2 blank or <code>BASELINE MISSING</code></td><td>The role doesn't match Role_Map, or a question title doesn't match a competency name</td><td>Compare Form Responses row 1 with the copied titles, and the role options with Role_Map column A</td></tr>
-      <tr><td>AU2 says <code>FAILED</code></td><td>No email address set</td><td>Fill in <code>EMAIL_FALLBACK_TO</code>, Save, then run <code>testWithLastRow</code></td></tr>
+      <tr><td>AU2 says <code>FAILED</code></td><td>No email address set</td><td>Add the <code>ALERT_EMAIL</code> Script Property, then run <code>testWithLastRow</code></td></tr>
       <tr><td><code>#REF!</code> "would overwrite data"</td><td>Something is typed below a row 1 formula</td><td>Clear that column from row 2 down</td></tr>
       <tr><td><i>Formula parse error</i> on paste</td><td>Your spreadsheet uses a European locale (<code>;</code> separators)</td><td>Switch <b>Formula style</b> at the top of this page to <b>European</b> and copy again</td></tr>
       <tr><td><code>#N/A</code> filling every column after the first in a block (e.g. P–W), with <i>"There is no value for this cell"</i></td><td>An older version of the O1, X1, AG1 or AR1 formula</td><td>Copy those four formulas again from Step 4. The current versions keep every block 9 columns wide</td></tr>

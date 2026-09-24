@@ -135,6 +135,12 @@ Common causes:
 
 To resend for the last row without submitting again: run **`testWithLastRow`**.
 
+## Step 6b (optional) — Spider chart per candidate (2 min)
+
+In Apps Script, run **`buildProfileTab`**. A **Candidate Profile** tab appears with a candidate
+picker in B1 and a radar chart of role requirement vs self-ratings. Details:
+[`sheets/candidate-profile.md`](../sheets/candidate-profile.md).
+
 ## Step 7 (optional) — Dashboard (10 min)
 
 1. Add the **`Candidate_Roster`** tab with 2–3 fake people, including one who hasn't submitted.

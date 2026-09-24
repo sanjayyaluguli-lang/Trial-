@@ -9,6 +9,7 @@
  *   3. Project Settings ▸ Script Properties ▸ add CHAT_WEBHOOK_URL (or edit the placeholder below).
  *   4. Run installTrigger() once and approve permissions.
  *   5. Run testWithLastRow() to verify.
+ *   6. Optional: run buildProfileTab() for a per-candidate spider chart.
  */
 const CFG = {
   // Placeholder – or set Script Property CHAT_WEBHOOK_URL (preferred; keeps the key out of code).
@@ -25,6 +26,7 @@ const CFG = {
   WAIT_FOR_CALC_MS: 20000
 };
 const PRIORITY_RANK = { Critical: 4, High: 3, Medium: 2, Med: 2, Low: 1 };
+const PROFILE_SHEET = 'Candidate Profile';
 
 /** Installable trigger handler: Spreadsheet ▸ On form submit. */
 function onFormSubmit(e) {
@@ -204,6 +206,75 @@ function installTrigger() {
     .filter(t => t.getHandlerFunction() === 'onFormSubmit')
     .forEach(t => ScriptApp.deleteTrigger(t));
   ScriptApp.newTrigger('onFormSubmit').forSpreadsheet(ss).onFormSubmit().create();
+}
+
+/**
+ * Run once (and again any time to rebuild): creates a "Candidate Profile" tab with a
+ * candidate picker in B1 and a radar (spider) chart of role requirement vs self-ratings.
+ * Formulas are written in standard syntax, which works in every spreadsheet locale.
+ */
+function buildProfileTab() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const engine = ss.getSheetByName(CFG.ENGINE_SHEET);
+  if (!engine) throw new Error('Tab "' + CFG.ENGINE_SHEET + '" not found.');
+  const C = CFG.COL, N = CFG.NUM_COMPETENCIES;
+  const letter = n => engine.getRange(1, n).getA1Notation().replace(/\d+/g, '');
+  const E = "'" + CFG.ENGINE_SHEET + "'!";
+  const block = start => E + letter(start) + ':' + letter(start + N - 1);
+  const one = n => E + letter(n) + ':' + letter(n);
+  const names = E + letter(C.NAME) + '2:' + letter(C.NAME);
+
+  let sh = ss.getSheetByName(PROFILE_SHEET);
+  if (sh) {
+    sh.getCharts().forEach(c => sh.removeChart(c));
+    sh.clear();
+    sh.getRange('B1').clearDataValidations();
+  } else {
+    sh = ss.insertSheet(PROFILE_SHEET);
+  }
+
+  sh.getRange('A1:A6').setValues([['Candidate'], ['Engine row'], ['Role'], ['Match Score'],
+                                  ['Readiness'], ['Critical gaps']]).setFontWeight('bold');
+  sh.getRange('B1').setDataValidation(SpreadsheetApp.newDataValidation()
+      .requireValueInRange(engine.getRange(letter(C.NAME) + '2:' + letter(C.NAME)), true).build())
+    .setBackground('#FFF4CC').setFontWeight('bold');
+  const responses = getResponsesSheet_(ss);
+  const lastRow = responses ? responses.getLastRow() : 1;
+  if (lastRow >= 2) sh.getRange('B1').setValue(engine.getRange(lastRow, C.NAME).getValue());
+
+  // Latest submission for the chosen name (#N/A until a name is picked).
+  sh.getRange('B2').setFormula('=MAX(FILTER(ROW(' + names + '), ' + names + ' = B1))');
+  sh.getRange('B3').setFormula('=IFERROR(INDEX(' + one(C.ROLE) + ', B2))');
+  sh.getRange('B4').setFormula('=IFERROR(INDEX(' + one(C.MATCH) + ', B2))').setNumberFormat('0.0%');
+  sh.getRange('B5').setFormula('=IFERROR(INDEX(' + one(C.READINESS) + ', B2))');
+  sh.getRange('B6').setFormula('=IFERROR(INDEX(' + one(C.CRIT_COUNT) + ', B2))');
+
+  sh.getRange('A8:E8').setValues([['Competency', 'Role requirement', 'Candidate', 'Priority', 'Gap']])
+    .setFontWeight('bold').setBackground('#E9EFEC');
+  sh.getRange('A9').setFormula('=ARRAYFORMULA(TRIM(TRANSPOSE(' + E + letter(C.SELF) + '1:' +
+                               letter(C.SELF + N - 1) + '1)))');
+  sh.getRange('B9').setFormula('=IFERROR(TRANSPOSE(INDEX(' + block(C.REQ) + ', $B$2)))');
+  sh.getRange('C9').setFormula('=IFERROR(TRANSPOSE(INDEX(' + block(C.SELF) + ', $B$2)))');
+  sh.getRange('D9').setFormula('=IFERROR(TRANSPOSE(INDEX(' + block(C.PRI) + ', $B$2)))');
+  sh.getRange('E9').setFormula('=IFERROR(TRANSPOSE(INDEX(' + block(C.GAP) + ', $B$2)))');
+  sh.setColumnWidth(1, 300);
+  sh.setColumnWidths(2, 4, 140);
+
+  const chart = sh.newChart()
+    .setChartType(Charts.ChartType.RADAR)
+    .addRange(sh.getRange(8, 1, N + 1, 3))
+    .setNumHeaders(1)
+    .setPosition(1, 7, 0, 0)
+    .setOption('title', 'Candidate vs role requirement (levels 1–4)')
+    .setOption('legend', { position: 'bottom' })
+    .setOption('series', { 0: { color: '#17313B', lineWidth: 3 }, 1: { color: '#00896B', lineWidth: 3 } })
+    .setOption('vAxis.viewWindow.min', 0)
+    .setOption('vAxis.viewWindow.max', 4)
+    .setOption('width', 640)
+    .setOption('height', 520)
+    .build();
+  sh.insertChart(chart);
+  ss.setActiveSheet(sh);
 }
 
 /** Manual test: re-sends the alert for the most recent response. */
